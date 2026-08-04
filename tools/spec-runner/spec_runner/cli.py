@@ -40,6 +40,10 @@ def main(argv: list[str] | None = None) -> int:
 
     sub.add_parser("affected").add_argument("--format", default="json")
 
+    p_bridge = sub.add_parser("bridge", help="跑 spec-runner 并注入 agent-spec resolve-ai")
+    p_bridge.add_argument("spec")
+    p_bridge.add_argument("--code", default=".")
+
     args = parser.parse_args(argv)
     return {
         "run": cmd_run,
@@ -47,6 +51,7 @@ def main(argv: list[str] | None = None) -> int:
         "allowed-changes": cmd_allowed_changes,
         "assert-no-boundary-violation": cmd_assert,
         "affected": cmd_affected,
+        "bridge": cmd_bridge,
     }[args.cmd](args)
 
 
@@ -100,3 +105,8 @@ def cmd_affected(args) -> int:
     from spec_runner.affected import collect_affected
     print(json.dumps(collect_affected(), ensure_ascii=False, indent=2))
     return 0
+
+
+def cmd_bridge(args) -> int:
+    from spec_runner.bridge import bridge
+    return bridge(args.spec, code=args.code)

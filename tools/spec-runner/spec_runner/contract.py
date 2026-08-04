@@ -12,7 +12,9 @@ from pathlib import Path
 
 import yaml
 
-_FRONT_RE = re.compile(r"\A---\n(.*?)\n---\n(.*)\Z", re.S)
+# 兼容两种 frontmatter：agent-spec 格式（直接 spec: 开头，无首行 ---）
+# 与 Jekyll 格式（首尾 --- 包裹）。(?:---\n)? 使首行 --- 可选。
+_FRONT_RE = re.compile(r"\A(?:---\n)?(.*?)\n---\n(.*)\Z", re.S)
 _TEST_KEYS = ("Package", "Filter", "Level", "Targets")
 _GWT_KEYS = ("Given", "When", "Then")
 
