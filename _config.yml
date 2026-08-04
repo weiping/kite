@@ -1,0 +1,11 @@
+title: 从 L1 到 L3
+description: 一个 AI 自主开发方案 —— 把 Berkeley RDI 软件自主开发三级框架落成可执行的工程方案
+remote_theme: just-the-docs/just-the-docs
+url: "https://weiping.github.io"
+baseurl: "/kite"
+permalink: pretty
+search_enabled: true
+heading_anchors: true
+aux_links:
+  "GitHub 仓库": "https://github.com/weiping/kite"
+footer_content: '© 2026 Kite · <a href="https://github.com/weiping/kite">weiping/kite</a>'

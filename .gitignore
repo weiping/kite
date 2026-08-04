@@ -19,3 +19,6 @@ build/
 .vscode/
 *.swp
 .DS_Store
+
+# pi agent 本地状态
+.pi/
