@@ -1,18 +1,30 @@
 ---
+kind: requirement
 id: REQ-INV-003
-level: MUST
+title: "合并逻辑是纯函数"
 status: accepted
-invariant: INV-003
+liveness: auto
+tags: [invariant, sync]
 ---
 
-# REQ-INV-003 合并逻辑是纯函数
+## Problem
+合并逻辑若读取系统时钟，结果将不可复现、与到达顺序相关，破坏交换律。
 
-合并逻辑 MUST 是纯函数，MUST NOT 读取系统时钟。
+## Requirements
+[REQ-INV-003] 合并逻辑 MUST 是纯函数，MUST NOT 读取系统时钟。
+比较依据是记录自带的时间戳。
 
-## Test
-- Package: semgrep
-- Filter: rules/no-system-clock-in-merge.yaml
-- Level: static
+## Scenarios
+Scenario: 合并不读系统时钟
+  Given 合并函数实现
+  When 静态扫描规则 no-system-clock-in-merge
+  Then 无系统时钟调用
 
-> 将不变量写成需求条款，使静态规则被注释掉时需求追溯会变红，
-> 防止架构约束在无人察觉的情况下消失。
+## Dependencies
+None.
+
+## Source Trace
+- invariant:INV-003
+
+## Open Questions
+None.

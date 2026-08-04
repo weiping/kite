@@ -1,13 +1,29 @@
 ---
+kind: requirement
 id: REQ-NOTIFY-ISOLATION
-level: MUST
+title: "离线通知存储隔离"
 status: accepted
+liveness: auto
+tags: [sync, isolation]
 ---
 
-# REQ-NOTIFY-ISOLATION 离线通知存储隔离
+## Problem
+Agent 编排层与 API Server 共用离线通知存储时，默认写同一库位会互相覆盖。
 
-两服务（Agent 编排层、API Server）的离线通知存储 MUST NOT 互相覆盖。
+## Requirements
+[REQ-NOTIFY-ISOLATION] 两服务的离线通知存储 MUST NOT 互相覆盖。
 
-## Test
-- 确定性探索引擎：差分测试——同一序列打两个行为应当等价的服务，比对响应与副作用。
-- 典型缺陷：两边默认写同一个库位，单看代码都对，代码评审几乎不可能发现，差分测试立刻抓到结果不一致。
+## Scenarios
+Scenario: 同一序列打两个服务结果一致
+  Given 两服务共享离线通知存储
+  When 同一通知序列分别送达两服务
+  Then 两者响应与副作用一致，无互相覆盖
+
+## Dependencies
+None.
+
+## Source Trace
+- prd:Kite §5.5 Sync
+
+## Open Questions
+None.
