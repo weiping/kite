@@ -71,5 +71,8 @@ def default_execute(selector: TestSelector) -> ExecResult:
         cmd = ["semgrep", "--config", filt]
     else:
         return ExecResult(exit_code=99, stderr=f"未知执行器 Package: {pkg}")
-    proc = subprocess.run(cmd, capture_output=True, text=True)
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True)
+    except FileNotFoundError:
+        return ExecResult(exit_code=127, stderr=f"命令不存在: {cmd[0]}")
     return ExecResult(exit_code=proc.returncode, stdout=proc.stdout, stderr=proc.stderr)

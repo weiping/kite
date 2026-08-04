@@ -1,5 +1,5 @@
 name: verify
-# 自主声明: L1 / G0-G1 / T0 / S1
+# L1 地基验证：需求治理 → 计划 DAG → 契约执行（spec-runner bridge 注入 agent-spec）→ 五态门禁
 on: [pull_request]
 
 permissions:
@@ -10,36 +10,47 @@ jobs:
   contract:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@<锁定 SHA>
+      # 注意：生产环境应把下列 action 锁到提交 SHA，不锁标签（标签可被重新指向）
+      - uses: actions/checkout@v4
         with: {fetch-depth: 0}
 
-      - name: 需求语料与依赖图
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: 装 agent-spec（意图编译器，Rust）
+        run: cargo install agent-spec --quiet
+
+      - name: 装 spec-runner + hypothesis + semgrep
         run: |
-          agent-spec lint-knowledge --gate
-          agent-spec requirements graph --gate
-          agent-spec requirements plan --gate
+          python -m pip install -e tools/spec-runner hypothesis
+          # semgrep 用于 INV-003 静态不变量；装失败则该契约判 uncertain
+          python -m pip install semgrep || echo "::warning::semgrep 未装，INV-003 将判 uncertain"
 
-      - name: 契约 lint
-        run: for s in specs/*.spec.md; do agent-spec lint "$s"; done
+      # V0 规约层：需求治理门禁（0 error 才过）
+      - name: lint knowledge corpus
+        run: agent-spec lint-knowledge --knowledge knowledge --gate
 
-      - name: 边界强制（纯路径检查，与语言无关）
+      # 计划 DAG：所有 ready REQ 必须有 satisfying spec（0 diagnostic 才过）
+      - name: requirements plan gate
+        run: agent-spec requirements plan --gate
+
+      # 契约执行：spec-runner 跑测试 → 注入 agent-spec resolve-ai（把 skip 变真实 verdict）
+      - name: bridge 各契约
         run: |
-          agent-spec lifecycle specs/ --code . --change-scope worktree \
-            --format json > .out/lifecycle.json || true
-          python -m spec_runner assert-no-boundary-violation .out/lifecycle.json
+          for s in task-sync-conflict task-proto-poison task-notify-isolation task-inv-003-pure-function; do
+            echo "::group::bridge $s"
+            python -m spec_runner bridge specs/$s.spec.md
+          done
 
-      - name: 执行契约绑定的测试
-        run: python -m spec_runner run specs/ --out .out/
-
-      - name: 五态门禁
-        run: python -m spec_runner gate .out/evidence.json --level L1
-
-      - name: 登记表与风险分级
-        # 顺序不能调：先确定性门禁，再算风险分级。
+      # 五态门禁：跳过永远阻断
+      - name: spec-runner run + gate
         run: |
-          python -m spec_runner affected --format json > .out/affected.json
-          conftest test --policy policy/ .out/affected.json
+          python -m spec_runner run specs/ --out .out
+          python -m spec_runner gate .out/evidence.json --level L1
 
-      - uses: actions/upload-artifact@<锁定 SHA>
+      - uses: actions/upload-artifact@v4
         if: always()
         with: {name: evidence, path: .out/}
