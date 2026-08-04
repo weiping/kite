@@ -1,4 +1,3 @@
----
 spec: task
 name: "离线笔记冲突合并"
 satisfies: [REQ-SYNC-CONFLICT]
