@@ -1,0 +1,22 @@
+# reversibility.yaml
+# 撤销成本登记表，门禁的输入。门禁读这份表决定本次变更能走到哪一档。
+# 新增路径没有登记，则默认落到最严档并要求人工补登记。
+
+- pattern: "apps/mobile/lib/**"
+  undo: 重新发版走审核
+  latency: 天级
+  side_effects_reversible: true
+  ceiling: D1
+
+- pattern: "config/sdui/**"
+  undo: 改配置，下次拉取生效
+  latency: 秒级
+  side_effects_reversible: true
+  ceiling: D2
+
+- pattern: "config/prompts/**"
+  undo: 改配置，秒级生效
+  latency: 秒级
+  side_effects_reversible: false       # 已生成的回答收不回来
+  ceiling: D1.5
+  blast_radius_cap: {gray: 0.05, calls_per_hour: 2000}

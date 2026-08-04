@@ -1,0 +1,31 @@
+{
+  "implementer": {
+    "model": "sonnet",
+    "maxTurns": 30,
+    "allowedTools": ["Read", "Write", "Edit", "Bash(pytest:*)", "Bash(flutter:*)"],
+    "permissions": {
+      "read":  ["specs/**", "knowledge/**", "services/**", "apps/**", "tests/**"],
+      "write": ["services/**", "apps/**"]
+    }
+  },
+
+  "test-author": {
+    "model": "sonnet",
+    "maxTurns": 20,
+    "allowedTools": ["Read", "Write", "Bash(pytest:*)"],
+    "permissions": {
+      "read":      ["specs/**", "knowledge/**", "tests/**",
+                    "apps/mobile/test/**", "doc/ixd/pages/**"],
+      "deny_read": ["services/**", "apps/mobile/lib/**"],
+      "write":     ["tests/**", "apps/mobile/test/**"]
+    }
+  },
+
+  "verifier": {
+    "model": "opus",
+    "maxTurns": 20,
+    "allowedTools": ["Read", "Bash(git diff:*)", "Bash(pytest:*)"],
+    "permissions": { "read": ["**"], "write": [] },
+    "locked": true
+  }
+}

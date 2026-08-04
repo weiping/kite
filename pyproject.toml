@@ -1,0 +1,5 @@
+# kite 根 pytest 配置：让 services.api.* 可从 tests/ 直接 import。
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-ra"

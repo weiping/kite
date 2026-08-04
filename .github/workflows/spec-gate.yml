@@ -1,0 +1,11 @@
+name: spec-gate
+# 每个 PR：V0 规约层（需求语料 lint、依赖图、计划一致性、契约边界）。阻断合并。
+# TODO: 落地 agent-spec lint-knowledge / requirements graph / requirements plan 三步与契约边界强制。
+on: [pull_request]
+jobs:
+  spec:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@<锁定 SHA>
+        with: {fetch-depth: 0}
+      - run: echo "spec-gate: V0 规约门禁（待落地）"

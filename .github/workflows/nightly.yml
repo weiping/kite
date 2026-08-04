@@ -1,0 +1,14 @@
+name: nightly
+# 每夜：V5 有效性（变异测试、需求追溯、Agent 行为评测、技能评测）。出报告，不阻断。
+# 不阻断是刻意的：变异得分与行为评测都有噪声，让有噪声的指标阻断合并最后一定会被加跳过开关。
+# 正确做法：出报告加趋势告警，连续三天破线才登记问题。
+on:
+  schedule:
+    - cron: "0 2 * * *"
+jobs:
+  nightly:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@<锁定 SHA>
+        with: {fetch-depth: 0}
+      - run: echo "nightly: V5 有效性报告（待落地）"

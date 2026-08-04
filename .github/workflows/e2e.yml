@@ -1,0 +1,13 @@
+name: e2e
+# 合并前：V4 端到端（integration_test 回归 + Maestro 冒烟 + 真机矩阵）。阻断合并。
+# TODO: 落地 Flutter integration_test、Maestro 冒烟与真机矩阵。
+on:
+  pull_request:
+    types: [ready_for_review]
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@<锁定 SHA>
+        with: {fetch-depth: 0}
+      - run: echo "e2e: V4 端到端回归（待落地）"

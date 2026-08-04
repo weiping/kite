@@ -1,0 +1,12 @@
+name: kite_design_lint
+description: Kite 设计系统 custom_lint 规则——禁止硬编码样式值，样式只能来自 packages/design 的令牌。
+publish_to: none
+environment:
+  sdk: ^3.4.0
+
+dependencies:
+  custom_lint: ^0.6.0
+  analyzer: ^6.7.0
+
+# 注意：版本号按方案「2026 年 8 月工具状态」填写，custom_lint 当时仍频繁变动。
+# 接入 dart 环境时请按 `dart pub add custom_lint` 的最新可用版本对齐，并跑通规则。

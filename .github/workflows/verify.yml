@@ -1,0 +1,45 @@
+name: verify
+# 自主声明: L1 / G0-G1 / T0 / S1
+on: [pull_request]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@<锁定 SHA>
+        with: {fetch-depth: 0}
+
+      - name: 需求语料与依赖图
+        run: |
+          agent-spec lint-knowledge --gate
+          agent-spec requirements graph --gate
+          agent-spec requirements plan --gate
+
+      - name: 契约 lint
+        run: for s in specs/*.spec.md; do agent-spec lint "$s"; done
+
+      - name: 边界强制（纯路径检查，与语言无关）
+        run: |
+          agent-spec lifecycle specs/ --code . --change-scope worktree \
+            --format json > .out/lifecycle.json || true
+          python -m spec_runner assert-no-boundary-violation .out/lifecycle.json
+
+      - name: 执行契约绑定的测试
+        run: python -m spec_runner run specs/ --out .out/
+
+      - name: 五态门禁
+        run: python -m spec_runner gate .out/evidence.json --level L1
+
+      - name: 登记表与风险分级
+        # 顺序不能调：先确定性门禁，再算风险分级。
+        run: |
+          python -m spec_runner affected --format json > .out/affected.json
+          conftest test --policy policy/ .out/affected.json
+
+      - uses: actions/upload-artifact@<锁定 SHA>
+        if: always()
+        with: {name: evidence, path: .out/}

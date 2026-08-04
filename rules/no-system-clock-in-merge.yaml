@@ -1,0 +1,20 @@
+# rules/no-system-clock-in-merge.yaml
+# 绑定 INV-003「合并逻辑 MUST 是纯函数，MUST NOT 读取系统时钟」
+# 通过 REQ-INV-003 作为静态验证手段纳入三态追溯。
+# 这是一个起步规则，落地时按实际合并模块路径收敛。
+
+rules:
+  - id: no-system-clock-in-merge
+    languages: [python, dart]
+    message: 合并逻辑禁止读取系统时钟，必须使用记录自带的时间戳。
+    severity: ERROR
+    paths:
+      include:
+        - "services/api/sync.py"
+        - "apps/mobile/lib/sync/merge.dart"
+    patterns:
+      - pattern-either:
+          - pattern: datetime.now(...)
+          - pattern: time.time(...)
+          - pattern: DateTime.now()
+          - pattern: NTP.now(...)

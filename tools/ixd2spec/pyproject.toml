@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ixd2spec"
+version = "0.1.0"
+description = "把 doc/ixd/pages 页面规约的状态流转编译成契约的 golden 测试义务"
+requires-python = ">=3.11"
+
+[project.scripts]
+ixd2spec = "ixd2spec.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["ixd2spec*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
