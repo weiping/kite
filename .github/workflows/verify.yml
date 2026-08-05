@@ -1,6 +1,6 @@
 name: verify
 # L1 地基验证：需求治理 → 计划 DAG → 契约执行（spec-runner bridge 注入 agent-spec）→ 五态门禁
-on: [pull_request]
+on: [push, pull_request]
 
 permissions:
   contents: read

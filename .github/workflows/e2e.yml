@@ -8,6 +8,6 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@<锁定 SHA>
+      - uses: actions/checkout@v4
         with: {fetch-depth: 0}
       - run: echo "e2e: V4 端到端回归（待落地）"
