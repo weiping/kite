@@ -11,5 +11,6 @@
 | INV-003 | 合并逻辑 MUST 是纯函数 | Semgrep：禁用系统时钟调用（`rules/no-system-clock-in-merge.yaml`） |
 | INV-004 | 用户数据出站 MUST 经过脱敏层 | Semgrep + OPA |
 | INV-005 | 下发内容 MUST 只接受白名单组件 | 三方对齐脚本 |
+| INV-006 | 转写清洗后 MUST 保留原始转写副本 | 属性测试（services/capture，REQ-INV-006） |
 
 > 触及不变量的变更一律走最高风险档（R3），强制人审加双人批准，任何等级下都不放松。
