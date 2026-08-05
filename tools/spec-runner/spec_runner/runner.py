@@ -63,16 +63,24 @@ def to_evidence(contract: Contract, results: list[ScenarioResult]) -> dict:
 def default_execute(selector: TestSelector) -> ExecResult:
     pkg = selector.package
     filt = selector.filter
+    cwd = None
     if pkg == "py":
         cmd = [sys.executable, "-m", "pytest", "-q", filt]
     elif pkg == "dart":
-        cmd = ["flutter", "test", filt]
+        # flutter test 需在项目根跑；filter 形如 [apps/mobile/]test/x.dart::test_name
+        filt_rel = filt[len("apps/mobile/"):] if filt.startswith("apps/mobile/") else filt
+        if "::" in filt_rel:
+            path, test_name = filt_rel.split("::", 1)
+            cmd = ["flutter", "test", path, "--plain-name", test_name]
+        else:
+            cmd = ["flutter", "test", filt_rel]
+        cwd = "apps/mobile"
     elif pkg == "semgrep":
         cmd = ["semgrep", "--config", filt]
     else:
         return ExecResult(exit_code=99, stderr=f"未知执行器 Package: {pkg}")
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True)
+        proc = subprocess.run(cmd, capture_output=True, text=True, cwd=cwd)
     except FileNotFoundError:
         return ExecResult(exit_code=127, stderr=f"命令不存在: {cmd[0]}")
     return ExecResult(exit_code=proc.returncode, stdout=proc.stdout, stderr=proc.stderr)

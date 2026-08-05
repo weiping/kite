@@ -20,6 +20,9 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '20'}
 
+      - uses: subosito/flutter-action@v2
+        with: {flutter-version: '3.44.4'}
+
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
 
@@ -44,10 +47,14 @@ jobs:
       - name: requirements plan gate
         run: agent-spec requirements plan --gate
 
+      # Flutter 依赖（dart 场景需要）
+      - name: flutter pub get
+        run: cd apps/mobile && flutter pub get
+
       # 契约执行：spec-runner 跑测试 → 注入 agent-spec resolve-ai（把 skip 变真实 verdict）
       - name: bridge 各契约
         run: |
-          for s in task-sync-conflict task-proto-poison task-notify-isolation task-inv-003-pure-function; do
+          for s in task-sync-conflict task-cap-voice task-proto-poison task-notify-isolation task-inv-003-pure-function; do
             echo "::group::bridge $s"
             python -m spec_runner bridge specs/$s.spec.md
           done

@@ -70,6 +70,14 @@ def test_flutter_命令不存在_是uncertain_不等于被证伪():
     assert flutter.classify(r)[0] is Verdict.UNCERTAIN
 
 
+def test_flutter_从输出解析可见测试数():
+    # flutter test 默认输出 "+N: ..."；无 collected 时应从中解析 visible
+    out = "00:00 +1: test_a\n00:00 +2: All tests passed!\n"
+    v, why = flutter.classify(ExecResult(0, out))
+    assert v is Verdict.PASS
+    assert "2" in why
+
+
 # ---- semgrep ------------------------------------------------------------
 def test_semgrep_退出0_无发现_是pass():
     assert semgrep.classify(ExecResult(0, ""))[0] is Verdict.PASS
