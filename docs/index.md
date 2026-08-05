@@ -336,7 +336,7 @@ INV-005 下发内容 MUST 只接受白名单组件          → 三方对齐脚�
 DESIGN.md（`google-labs-code/design.md`）上半部分是 YAML 设计令牌给精确值，下半部分是散文说明为什么是这些值。它带命令行工具，设计系统因此第一次有了 CI 门禁：
 
 ```bash
-npx -y @google/design.md lint doc/ixd/DESIGN.md              # 结构、引用、对比度
+npx -y @google/design.md lint docs/ixd/DESIGN.md              # 结构、引用、对比度
 npx -y @google/design.md diff /tmp/base.md DESIGN.md          # 回归检测，退出码 1 阻断
 npx -y @google/design.md export --format dtcg DESIGN.md > tokens.json
 ```
@@ -870,7 +870,7 @@ kite/
 │   └── reversibility.rego      #   登记表校验
 ├── rules/                      # 静态检查规则，被不变量绑定
 │   └── no-system-clock-in-merge.yaml
-├── doc/ixd/                    # 交互设计产物
+├── docs/ixd/                    # 交互设计产物
 │   ├── pages/                  #   逐页规约
 │   ├── DESIGN.md               #   设计系统，单一事实源
 │   └── sdui-components.json    #   可下发组件白名单

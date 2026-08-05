@@ -12,7 +12,7 @@ allowed-tools: Read, Write
 ## 输入
 - `knowledge/requirements/REQ-*.md`（status: accepted）
 - `knowledge/invariants/`（边界要受不变量约束）
-- 相关页面规约（doc/ixd/pages，界面相关任务）
+- 相关页面规约（docs/ixd/pages，界面相关任务）
 
 ## 规则
 1. `Completion Criteria` 里每个 Scenario 必须绑定**具体的测试选择器**（`Package` + `Filter`），

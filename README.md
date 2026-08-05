@@ -14,7 +14,7 @@
 | `specs/*.spec.md` | 任务契约，L1 的人审对象 | 规约 |
 | `policy/*.rego` | 门禁策略（risk / boundary / reversibility） | 门禁怎么写 |
 | `rules/*.yaml` | 静态检查规则，被不变量绑定 | 架构 |
-| `doc/ixd/` | 交互设计产物（逐页规约 / DESIGN.md / SDUI 组件白名单） | 界面 |
+| `docs/ixd/` | 交互设计产物（逐页规约 / DESIGN.md / SDUI 组件白名单） | 界面 |
 | `packages/design/` | 由 DESIGN.md 编译出的 Flutter 主题 | 界面 |
 | `apps/mobile/` `services/` | Flutter 客户端 / Python 后端 | 仓库长什么样 |
 | `tools/spec-runner/` | 执行器适配与五态门禁 | 契约怎么绑定测试 |

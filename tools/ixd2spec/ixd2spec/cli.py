@@ -11,7 +11,7 @@ from ixd2spec.page import parse_page, to_scenarios
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="ixd2spec",
                                     description="页面规约状态流转 → 契约 golden 测试义务")
-    parser.add_argument("page", help="doc/ixd/pages/<page>.md")
+    parser.add_argument("page", help="docs/ixd/pages/<page>.md")
     parser.add_argument("--lib", help="对应实现路径，缺省由文件名推导")
     parser.add_argument("--dart-test-dir", default="apps/mobile/test")
     args = parser.parse_args(argv)

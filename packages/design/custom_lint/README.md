@@ -10,7 +10,7 @@ Kite 设计系统的 custom_lint 规则。方案「界面」章：**Flutter 侧�
 | `kite_no_hardcoded_color` | 裸 `Color(0xFF...)` | 用 `AppColors.xxx` |
 | `kite_no_hardcoded_spacing` | `EdgeInsets` 等里的裸 `double` | 用 `AppSpacing.xxx` |
 
-样式值的单一事实源是 `packages/design/app_tokens.dart`（由 `tools/dtcg2flutter` 从 `doc/ixd/tokens.json` 生成）。
+样式值的单一事实源是 `packages/design/app_tokens.dart`（由 `tools/dtcg2flutter` 从 `docs/ixd/tokens.json` 生成）。
 令牌文件本身允许字面量（豁免）。
 
 ## 状态

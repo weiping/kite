@@ -12,7 +12,7 @@ allowed-tools: Read, Write, Bash(pytest:*), Bash(flutter test:*)
 ## 输入
 - specs/<contract>.spec.md 的 Completion Criteria
 - knowledge/requirements/ 下被 satisfies 引用的条款
-- doc/ixd/pages/ 下相关页面规约（仅界面相关任务）
+- docs/ixd/pages/ 下相关页面规约（仅界面相关任务）
 
 ## 规则
 1. 每个场景对应一个测试函数，函数名必须与契约里的 Filter 完全一致

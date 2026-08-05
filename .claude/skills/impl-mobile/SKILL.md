@@ -11,7 +11,7 @@ allowed-tools: Read, Write, Edit, Bash(flutter:*)
 
 ## 输入
 - `specs/<contract>.spec.md` 的 Intent / Decisions / Boundaries
-- `doc/ixd/pages/` 相关页面规约、`packages/design/` 主题令牌
+- `docs/ixd/pages/` 相关页面规约、`packages/design/` 主题令牌
 - golden 截图（验收三方之一）
 
 ## 规则

@@ -1,6 +1,6 @@
 ---
 name: ixd-bridge
-description: 把逐页交互说明（doc/ixd/pages）的状态流转编译成契约的 golden 测试义务。
+description: 把逐页交互说明（docs/ixd/pages）的状态流转编译成契约的 golden 测试义务。
 allowed-tools: Read, Write
 ---
 
@@ -10,8 +10,8 @@ ixd-design 第四阶段的逐页说明里有一节专讲状态流转。那七种
 无权限、离线、超长文本——恰好是 AI 写 UI 时最常漏掉的。你的工作是把它们从文档变成机器可检查的义务。
 
 ## 输入
-- `doc/ixd/pages/*.md` 逐页规约，尤其状态矩阵那节
-- `doc/ixd/sdui-components.json` 组件白名单（产出只能引用白名单组件）
+- `docs/ixd/pages/*.md` 逐页规约，尤其状态矩阵那节
+- `docs/ixd/sdui-components.json` 组件白名单（产出只能引用白名单组件）
 - 已有契约 `specs/*.spec.md`（决定是新增场景还是追加到既有契约）
 
 ## 规则

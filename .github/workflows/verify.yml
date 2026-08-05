@@ -17,6 +17,9 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.13'}
 
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
 
@@ -28,6 +31,10 @@ jobs:
           python -m pip install -e tools/spec-runner hypothesis
           # semgrep 用于 INV-003 静态不变量；装失败则该契约判 uncertain
           python -m pip install semgrep || echo "::warning::semgrep 未装，INV-003 将判 uncertain"
+
+      # 设计系统门禁：DESIGN.md 结构/对比度（包名按上游核对）
+      - name: lint DESIGN.md
+        run: npx -y @google/design.md lint docs/ixd/DESIGN.md
 
       # V0 规约层：需求治理门禁（0 error 才过）
       - name: lint knowledge corpus
