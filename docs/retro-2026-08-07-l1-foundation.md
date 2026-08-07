@@ -81,6 +81,25 @@ M0 最后拼图。成果 + 新踩坑：
 - 模型下载（609MB，慢）→ 放 app Documents（`~/Library/Containers/com.kite.kiteMobile/Data/Documents/whisper-small/`）→ `flutter run -d macos` 长按录音看转写
 - record wav 在 macOS 真产出标准 wav（需 run 验证 readWave 能读）
 
+## 续作2：M0 数据流闭环 + 端到端（08-07）
+
+M0 后端纯逻辑链完整 + 客户端 Dart 端侧全链 + 串联。
+
+**成果**
+- 后端闭环：classify→store→search（Python，属性测试，demo 验证 `classify(文本)→持久化→search 带来源`）
+- 客户端 Dart 全链：`lib/capture/{classify,search}` + `lib/store/store`（复刻规则）+ main.dart 串（录音/文本→classify→store→时间线+搜索）
+- 两端契约驱动：同一 spec 规范 Python+Dart，各自属性测试/flutter_test（防漂移）
+- whisper 未装时文本输入 fallback（端到端框架不依赖模型可跑）
+
+**新踩坑**
+- **sherpa_onnx API**：`OfflineRecognizerConfig(model:)` 非 modelConfig:；`OfflineRecognizer(config)` 位置参数；`decode(OfflineStream)` 需先 `readWave` + `acceptWaveform`（非直接传 path）
+- **hypothesis @given 与 pytest tmp_path fixture 冲突** → 用 `tempfile.TemporaryDirectory`
+- **Dart import 相对路径**：子目录文件（store/search）import 同目录用 `'classify.dart'` 或 `package:`，不能 `'capture/classify.dart'`（相对自身目录解析错）
+- **`expect(bool, isTrue)` 在此环境报参数数错** → 用 `true` 替代（同效）
+- 模型实际 609MB（非 200MB），github 国内 ~350KB/s，会话内下不完 → 需代理/mirror
+
+**M0 状态**：端到端框架两端完整，**whisper 模型下载是唯一阻塞**（网络）。文本路径现在能 `flutter run -d macos` 跑通全链。
+
 ## 恢复上下文的快捷命令
 
 ```bash
