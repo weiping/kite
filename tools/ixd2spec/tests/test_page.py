@@ -29,6 +29,13 @@ def test_parse_page_无状态段返回空():
     assert page.states == []
 
 
+def test_parse_page_兼容ixd_design_P4状态机标题():
+    # P4 模板用 "## Section 5: 状态机（页面状态流转）"，应被识别
+    text = "# 页\n\n## Section 5: 状态机（七态）\n\n- 默认: a\n- 加载: b\n"
+    page = parse_page(text)
+    assert len(page.states) == 2
+
+
 def test_standard_states_七种齐全():
     assert STANDARD_STATES == {
         "默认", "加载", "空数据", "报错", "无权限", "离线", "超长文本",

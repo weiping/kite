@@ -38,7 +38,8 @@ def parse_page(text: str) -> PageSpec:
 
 
 def _parse_states(text: str) -> list[tuple[str, str]]:
-    m = re.search(r"^##\s*状态\s*\n(.*?)(?=^##\s|\Z)", text, re.M | re.S)
+    # 匹配 H2 标题含「状态」的段（状态 / 状态机 / Section 5: 状态机 等）
+    m = re.search(r"^##\s*[^\n]*状态[^\n]*\n(.*?)(?=^##\s|\Z)", text, re.M | re.S)
     if not m:
         return []
     states: list[tuple[str, str]] = []
