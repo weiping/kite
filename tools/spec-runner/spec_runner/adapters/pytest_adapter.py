@@ -32,6 +32,8 @@ def classify(result: ExecResult) -> tuple[Verdict, str]:
             return Verdict.PASS, f"pytest 退出 0，收集 {collected} 个测试"
         return Verdict.FAIL, "pytest 退出 0 但收集数为 0，选择器命中零个测试（契约缺陷）"
     if code == 1:
+        if "no module named pytest" in (result.stdout + "\n" + result.stderr).lower():
+            return Verdict.UNCERTAIN, "pytest 未安装（No module named pytest），工具链缺失"
         return Verdict.FAIL, "pytest 退出 1，有测试失败"
     if code == 5:
         return Verdict.FAIL, "pytest 退出 5，未收集到测试"

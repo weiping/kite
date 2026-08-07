@@ -26,6 +26,12 @@ def test_pytest_退出1_是fail():
     assert pytest.classify(ExecResult(1, "1 failed"))[0] is Verdict.FAIL
 
 
+def test_pytest_未安装判uncertain_工具缺失():
+    # python -m pytest 未装时 exit 1 + No module named，应判工具缺失而非测试失败
+    v, why = pytest.classify(ExecResult(1, stderr="No module named pytest"))
+    assert v is Verdict.UNCERTAIN
+
+
 def test_pytest_退出5_未收集到测试_是fail():
     assert pytest.classify(ExecResult(5, "no tests ran"))[0] is Verdict.FAIL
 

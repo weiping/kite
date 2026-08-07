@@ -31,7 +31,7 @@ jobs:
 
       - name: 装 spec-runner + hypothesis + semgrep
         run: |
-          python -m pip install -e tools/spec-runner hypothesis
+          python -m pip install -e "tools/spec-runner[test]" hypothesis
           # semgrep 用于 INV-003 静态不变量；装失败则该契约判 uncertain
           python -m pip install semgrep || echo "::warning::semgrep 未装，INV-003 将判 uncertain"
 
@@ -50,12 +50,6 @@ jobs:
       # Flutter 依赖（dart 场景需要）
       - name: flutter pub get
         run: cd apps/mobile && flutter pub get
-
-      - name: 诊断 pytest（CI 原始输出）
-        run: |
-          python --version
-          python -c "from services.api.sync import merge_notes; print('import ok')"
-          python -m pytest tests/sync -v 2>&1 | tail -40
 
       # 契约执行：spec-runner 跑测试 → 注入 agent-spec resolve-ai（把 skip 变真实 verdict）
       - name: bridge 各契约
