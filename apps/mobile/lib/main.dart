@@ -1,7 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'capture/audio_recorder.dart';
 import 'capture/voice_entry.dart';
+import 'capture/whisper_transcriber.dart';
 
 void main() => runApp(const KiteApp());
 
@@ -25,18 +29,42 @@ class VoiceScreen extends StatefulWidget {
 class _VoiceScreenState extends State<VoiceScreen> {
   final VoiceEntry _entry = VoiceEntry();
   final VoiceRecorder _recorder = VoiceRecorder();
-  String _status = '长按麦克风说话';
+  final WhisperTranscriber _transcriber = WhisperTranscriber();
+  String _status = '初始化…';
+
+  @override
+  void initState() {
+    super.initState();
+    _maybeInitModel();
+  }
+
+  Future<void> _maybeInitModel() async {
+    final dir = await getApplicationDocumentsDirectory();
+    final modelDir = '${dir.path}/whisper-small';
+    if (await File('$modelDir/encoder.int8.onnx').exists()) {
+      _transcriber.init(modelDir);
+      if (mounted) setState(() => _status = '模型就绪，长按麦克风说话');
+    } else {
+      if (mounted) setState(() => _status = '长按说话（模型未装，仅录音）');
+    }
+  }
 
   Future<void> _onStart() async {
     _entry.onStart();
     await _recorder.start();
-    if (mounted) setState(() => _status = '录音中…松手提交，点按钮取消');
+    if (mounted) setState(() => _status = '录音中…松手提交');
   }
 
   Future<void> _onSubmit() async {
     final path = await _recorder.stop();
     _entry.onSubmit();
-    if (mounted) setState(() => _status = path == null ? '未录到' : '已录: $path');
+    String? text;
+    if (path != null && _transcriber.isReady) {
+      text = _transcriber.transcribe(path);
+    }
+    if (mounted) {
+      setState(() => _status = text == null ? '已录: $path' : '转写: $text');
+    }
   }
 
   void _onCancel() {
@@ -51,14 +79,17 @@ class _VoiceScreenState extends State<VoiceScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Kite 速记')),
       body: Center(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(recording ? Icons.mic : Icons.mic_none, size: 72,
-              color: recording ? const Color(0xFFEF4444) : const Color(0xFF3B82F6)),
-          const SizedBox(height: 16),
-          Text(_status, style: const TextStyle(fontSize: 16)),
-          const SizedBox(height: 8),
-          Text('状态: ${_entry.state.name}', style: const TextStyle(color: Colors.grey)),
-        ]),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Icon(recording ? Icons.mic : Icons.mic_none, size: 72,
+                color: recording ? const Color(0xFFEF4444) : const Color(0xFF3B82F6)),
+            const SizedBox(height: 16),
+            Text(_status, textAlign: TextAlign.center, style: const TextStyle(fontSize: 16)),
+            const SizedBox(height: 8),
+            Text('状态: ${_entry.state.name}', style: const TextStyle(color: Colors.grey)),
+          ]),
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: GestureDetector(

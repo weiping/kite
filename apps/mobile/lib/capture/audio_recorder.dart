@@ -12,8 +12,16 @@ class VoiceRecorder {
   Future<void> start() async {
     if (!await _rec.hasPermission()) return;
     final dir = await getTemporaryDirectory();
-    final path = '${dir.path}/kite_recording.m4a';
-    await _rec.start(const rec.RecordConfig(encoder: rec.AudioEncoder.aacLc), path: path);
+    final path = '${dir.path}/kite_recording.wav';
+    // whisper 要求 16kHz 单声道 PCM16（wav）
+    await _rec.start(
+      const rec.RecordConfig(
+        encoder: rec.AudioEncoder.wav,
+        sampleRate: 16000,
+        numChannels: 1,
+      ),
+      path: path,
+    );
     _recording = true;
   }
 
