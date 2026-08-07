@@ -60,6 +60,27 @@
 3. **L1.5**：风险分级抽检（policy/risk.rego 已有）、审计包（tools/audit-seal）、影子运行
 4. **nightly V5**：变异测试接线，进入 L1 出口准则
 
+## 续作：whisper 端侧转写（08-07）
+
+M0 最后拼图。成果 + 新踩坑：
+
+**成果**
+- `whisper_transcriber`（sherpa_onnx 1.13.4）：OfflineRecognizer + readWave + stream + acceptWaveform
+- `audio_recorder` 录 wav（16k mono PCM16，sherpa 要求）
+- main 接转写：模型就绪则转写、未装降级仅录音
+- 模型下载脚本（sherpa-onnx-whisper-small）
+- **flutter build macos 成功**（native 链接验证：sherpa + onnxruntime + record 全通过）
+
+**新踩坑**
+- macOS 部署目标：flutter create 默认 10.15，Xcode 27 要 12.0+，且 `record_macos` 的 `auAudioUnit` 要 13.0+ → Podfile platform 13.0 + post_install 强制 Pod target 13.0 + pbxproj 13.0
+- sherpa API：`OfflineRecognizerConfig(model:)` 不是 `modelConfig:`；`OfflineRecognizer(config)` 位置参数；`decode(OfflineStream)` 需先 `readWave` + `acceptWaveform`
+- record 7.x 类名 `AudioRecorder` 与自定义类撞 → `import as rec`
+- 模型实际 **609MB**（非预估 200MB），github releases 国内 ~350KB/s，约 30 分钟 → 用 hf.qhduan.com / modelscope 镜像
+
+**仍待（真跑）**
+- 模型下载（609MB，慢）→ 放 app Documents（`~/Library/Containers/com.kite.kiteMobile/Data/Documents/whisper-small/`）→ `flutter run -d macos` 长按录音看转写
+- record wav 在 macOS 真产出标准 wav（需 run 验证 readWave 能读）
+
 ## 恢复上下文的快捷命令
 
 ```bash
