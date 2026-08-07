@@ -54,7 +54,7 @@ jobs:
       # 契约执行：spec-runner 跑测试 → 注入 agent-spec resolve-ai（把 skip 变真实 verdict）
       - name: bridge 各契约
         run: |
-          for s in task-sync-conflict task-cap-voice task-proto-poison task-notify-isolation task-inv-003-pure-function; do
+          for s in task-sync-conflict task-cap-voice task-struct-classify task-proto-poison task-notify-isolation task-inv-003-pure-function; do
             echo "::group::bridge $s"
             python -m spec_runner bridge specs/$s.spec.md
           done
