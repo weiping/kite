@@ -84,6 +84,14 @@ def test_flutter_从输出解析可见测试数():
     assert "2" in why
 
 
+def test_flutter_CI_emoji格式解析可见数():
+    # CI non-TTY 用 emoji reporter: "🎉 1 test passed."，无 +N
+    out = "✅ test_long_press_records\n\n🎉 1 test passed.\n"
+    v, why = flutter.classify(ExecResult(0, out))
+    assert v is Verdict.PASS
+    assert "1" in why
+
+
 # ---- semgrep ------------------------------------------------------------
 def test_semgrep_退出0_无发现_是pass():
     assert semgrep.classify(ExecResult(0, ""))[0] is Verdict.PASS

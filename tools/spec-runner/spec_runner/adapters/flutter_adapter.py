@@ -13,8 +13,15 @@ from spec_runner.verdict import Verdict
 
 
 def _parse_visible(stdout: str) -> int:
+    # TTY 模式: "00:00 +2: All tests passed"
     nums = [int(m) for m in re.findall(r"\+(\d+):", stdout)]
-    return max(nums) if nums else 0
+    if nums:
+        return max(nums)
+    # CI 模式（non-TTY）: "🎉 1 test passed."（emoji reporter，无 +N）
+    m = re.search(r"🎉\s*(\d+)\s*test", stdout)
+    if m:
+        return int(m.group(1))
+    return 0
 
 
 def classify(result: ExecResult) -> tuple[Verdict, str]:
