@@ -23,7 +23,8 @@ def classify(result: ExecResult) -> tuple[Verdict, str]:
         return Verdict.UNCERTAIN, "flutter 命令不存在，工具链缺失（不等于被证伪）"
     visible = result.collected if result.collected is not None else _parse_visible(out)
     if visible == 0:
-        return Verdict.FAIL, "flutter 事件流中可见测试数为 0（已排除隐藏用例）"
+        tail = out[-400:]
+        return Verdict.FAIL, f"flutter 可见测试数为 0（exit={result.exit_code}）；输出末尾: {tail}"
     if result.exit_code != 0:
         return Verdict.FAIL, "flutter 有测试结果非成功"
     return Verdict.PASS, f"flutter 通过，可见 {visible} 个测试"
