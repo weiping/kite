@@ -699,6 +699,16 @@ L2 下人不再看代码，也就不再有人凭直觉“这里可能有问题�
 
 ---
 
+### 落地现状（kite L2-1，2026-08-08）
+
+L2 是长期目标（12 周达标窗口），kite 刚起步。已建第一根柱子的一层：
+
+**柱二·层 3 回归有效性验证**：`spec-runner regression-check <spec>`。假设工作区含修复（git diff），`stash` 还原跑测试（期望红）→ `pop` 恢复跑（期望绿）。`before=FAIL + after=PASS` 才有效——`before=PASS` 说明测试没测这个 bug（自洽但不正确），退 1。零模型调用，两次机械执行。
+
+主要给 Agent 修复任务的会话内验证（修完跑一遍再 commit）。CI 接线（commit-ref 模式，HEAD vs HEAD~1）留后续——PR 工作区干净，stash 无效。
+
+**待建**：柱二其余层（Test Author 隔离、变异测试、Verifier 五项、独立裁决）/ 柱三探索引擎（差分/模糊/混沌）/ 需求 provenance / 影子运行达标（L1.5→L2 切换准入）。
+
 ## L3：只做试点，范围极窄
 
 ### 循环半径决定了你必须配什么

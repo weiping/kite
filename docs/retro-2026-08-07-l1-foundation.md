@@ -242,6 +242,20 @@ audit-seal 收尾：保留期限 + 入库归档。
 
 risk 评估（R0-R3 + boundary + dangling 函数级 → deny）· R0 自动合并（branch protection）· 审计包（CycloneDX AI-BOM 动态 + 制品引用 + retention + --archive 入库）· 影子记录。关卡概率化闭环全建立。
 
+## 续作11：L2-1 回归有效性验证（反自洽链层3，08-08）
+
+L2 第一根柱子的一层——反自洽验证链层 3（index.md 点名「整条链最省钱」）。
+
+**成果**
+- `spec-runner regression-check <spec>` 子命令：假设工作区含修复，`stash` 还原跑测试（期望红）→ `pop` 恢复跑（期望绿）
+- `_regression_report`：`before(还原)=FAIL + after(修复)=PASS` 才有效；`before=PASS` = 测试没测 bug（自洽但不正确）→ invalid 退 1
+- 三段规则（前红/后绿/还原红）由 before FAIL + after PASS 覆盖（还原红 = before）
+- 零模型调用，两次机械执行；TDD 4 task，80 测试绿
+
+**范围说明**：regression-check 假设工作区含修复（未 commit），主要给 Agent 修复任务会话内验证（修完跑一遍再 commit）。CI 接线需 commit-ref 模式（HEAD vs HEAD~1），留后续。
+
+**L2 现状**：柱二·层 3 已建。待建：柱二其余层（Test Author 隔离/变异/Verifier/独立裁决）+ 柱三探索引擎 + provenance + 影子运行达标。L2 切换（去人审）需 12 周数据 + 四柱齐全，kite 还早。
+
 ## 待做：L1/L1.5 工作流复用 Skill（08-08 讨论，暂缓）
 
 把 L1/L1.5 工作流抽象成 pi skill 复用到其他项目。方案要点（避免重想）：
