@@ -388,3 +388,20 @@ def test_regression_report_还原就绿无效_测试没测bug():
     after = [ScenarioResult("场景", "py", "f", Verdict.PASS, "修复也过")]
     report = _regression_report(before, after)
     assert report["valid"] is False  # before PASS = 测试没测这个 bug
+
+
+def test_regression_check_stash还原pop恢复跑两轮(monkeypatch):
+    from spec_runner import regression
+    from spec_runner.runner import ScenarioResult
+    from spec_runner.verdict import Verdict
+    calls = []
+    monkeypatch.setattr(regression, "_git", lambda args: calls.append(tuple(args)) or "")
+    monkeypatch.setattr(regression, "parse_contract_file", lambda spec: "fake_contract")
+    states = iter([
+        [ScenarioResult("s", "py", "f", Verdict.FAIL, "bug 在")],
+        [ScenarioResult("s", "py", "f", Verdict.PASS, "修了")],
+    ])
+    monkeypatch.setattr(regression, "run_contract", lambda contract, execute: next(states))
+    report = regression.regression_check("fake.spec.md")
+    assert report["valid"] is True
+    assert ("stash",) in calls and ("stash", "pop") in calls

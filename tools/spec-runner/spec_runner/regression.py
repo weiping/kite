@@ -6,7 +6,11 @@ before(还原)=FAIL + after(修复)=PASS 才算有效——before=PASS 说明测
 """
 from __future__ import annotations
 
-from spec_runner.runner import ScenarioResult
+import subprocess
+from pathlib import Path
+
+from spec_runner.contract import parse_contract_file
+from spec_runner.runner import ScenarioResult, default_execute, run_contract
 from spec_runner.verdict import Verdict
 
 
@@ -24,3 +28,21 @@ def _regression_report(before: list[ScenarioResult], after: list[ScenarioResult]
             "valid": ok,
         })
     return {"valid": valid, "results": results}
+
+
+def regression_check(spec_path: str | Path, execute=default_execute) -> dict:
+    """回归有效性验证：假设工作区含修复，stash 还原 → 跑（期望红）→ pop 恢复 → 跑（期望绿）。"""
+    contract = parse_contract_file(spec_path)
+    _git(["stash"])                        # 还原修复
+    before = run_contract(contract, execute)
+    _git(["stash", "pop"])                 # 恢复修复
+    after = run_contract(contract, execute)
+    return _regression_report(before, after)
+
+
+def _git(args: list[str]) -> str:
+    try:
+        r = subprocess.run(["git", *args], capture_output=True, text=True)
+    except FileNotFoundError:
+        return ""
+    return r.stdout if r.returncode == 0 else ""
