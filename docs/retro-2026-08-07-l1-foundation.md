@@ -148,14 +148,37 @@ M0 后端纯逻辑链完整 + 客户端 Dart 端侧全链 + 串联。
 - 已验证通过的链路：模型下载/校验/解压、`initBindings`、`isReady=true`、Listener 手势触发（record start/submit 日志反复出现）、字体/图标渲染、按钮圆形
 - 待有音频设备的环境再跑：长按 → wav → `transcribe` → 时间线
 
+## 续作5：L1.5 风险分级接线（阶段1，08-08）
+
+L1.5 三件中的第一件——风险分级接线——完成并上 main。
+
+**成果**
+- `spec-runner risk` 子命令：`collect_risk_input()`（复用 affected）→ `evaluate_risk()`（subprocess `opa eval policy/risk.rego`）→ `{level: R0-R3, deny: [...]}`
+- opa 缺失明确报错（`FileNotFoundError`，exit 2）；`deny` 非空 exit 1（gate）
+- CI `verify.yml` 加 `open-policy-agent/setup-opa@v2` + risk gate 步骤（输出 level，deny 阻断）
+- TDD 5 task，全量 97 测试绿（+20 risk）；CI 真实输出 `level: R1`（本次改动超 50 行），deny 空，gate 过
+- 实施计划存档 `docs/superpowers/plans/2026-08-08-l1.5-risk-wiring.md`
+
+**踩坑**
+- opa 本地 `brew install opa`（1.19.0），CI `setup-opa@v2`；rego v1 query `data.kite.risk` 取 package 所有 public，提取 `level`/`deny`
+- TDD 分段：`evaluate_risk` 拆 Task2（opa 缺失检测）+ Task3（opa eval 逻辑），每段测试先行（避免代码先于测试）
+- setup-opa@v2 走 Node 20（deprecated warning，未来换 action 版本）
+
+**阶段2 待办（L1.5 继续）**
+- R0 自动合并：GitHub branch protection + auto-merge（risk gate 输出 level 驱动）
+- `dangling_selectors`/`boundary_violations` 实填（扫所有 specs allowed_changes 并集 vs changed）
+- 影子运行：记录 level vs 人审决定，算一致性（L1→L1.5 切换准入，≥90%）
+- audit-seal 审计包（空目录待实现，出口准则完备率 100%）
+
 ## 恢复上下文的快捷命令
 
 ```bash
 cd ~/workspace/dev/kite
-.venv/bin/python -m pytest tools/spec-runner/tests/ tools/ixd2spec/tests/ tools/dtcg2flutter/tests/ tests/ -q  # 77 测试
+.venv/bin/python -m pytest tools/spec-runner/tests/ tools/ixd2spec/tests/ tools/dtcg2flutter/tests/ tests/ -q  # 97 测试
 agent-spec requirements plan          # 0 diagnostic
 agent-spec lint-knowledge --gate      # 0 error
 .venv/bin/python -m spec_runner bridge specs/task-cap-voice.spec.md  # 4 场景全 pass
 flutter analyze                       # apps/mobile 0 error
 gh run list --workflow verify.yml     # CI 全绿
+.venv/bin/python -m spec_runner risk                    # L1.5 风险分级 → {level, deny}
 ```
