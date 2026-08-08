@@ -123,3 +123,14 @@ def test_collect_risk_input_复用affected结构(monkeypatch):
     assert data["changed_files"] == ["services/a.py", "policy/risk.rego"]
     assert data["changed_lines"] == 42
     assert "dangling_selectors" in data and "boundary_violations" in data
+
+
+def test_opa缺失_抛明确错误(monkeypatch):
+    from spec_runner import risk
+    monkeypatch.setattr(risk.shutil, "which", lambda _: None)
+    try:
+        risk.evaluate_risk({"changed_files": [], "changed_lines": 0})
+    except FileNotFoundError as e:
+        assert "opa" in str(e) and "install" in str(e).lower()
+    else:
+        raise AssertionError("应抛 FileNotFoundError")
