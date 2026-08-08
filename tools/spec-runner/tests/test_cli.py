@@ -580,3 +580,18 @@ def test_verify_ai命令_缺key退出2(monkeypatch, capsys):
     monkeypatch.setattr(verify_ai, "verify_ai", lambda spec: (_ for _ in ()).throw(RuntimeError("缺 ZHIPUAI_API_KEY")))
     assert cli.main(["verify-ai", "fake.spec.md"]) == 2
     assert "ZHIPUAI_API_KEY" in capsys.readouterr().err
+
+
+def test_charter_lint_检查requirements引用charter(tmp_path):
+    from spec_runner.charter import charter_lint
+    reqdir = tmp_path / "requirements"
+    reqdir.mkdir()
+    (reqdir / "with.md").write_text(
+        "## Source Trace\n- stated: charter 第1条（用户数据属用户）\n", encoding="utf-8")
+    (reqdir / "without.md").write_text(
+        "## Source Trace\n- stated: prd §1\n", encoding="utf-8")
+    (reqdir / "notrace.md").write_text("# 无 Source Trace\n", encoding="utf-8")
+    r = charter_lint(reqdir)
+    assert r["checked"] == 3
+    assert r["with_charter"] == 1
+    assert len(r["issues"]) == 2  # without + notrace
