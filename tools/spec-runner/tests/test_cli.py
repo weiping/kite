@@ -415,3 +415,28 @@ def test_regression_check命令_valid退出0_invalid退出1(monkeypatch, capsys)
     monkeypatch.setattr(regression, "regression_check",
                         lambda spec: {"valid": False, "results": [{"scenario": "s", "before": "pass", "after": "pass", "valid": False}]})
     assert cli.main(["regression-check", "fake.spec.md"]) == 1
+
+
+def test_provenance_lint_缺SourceTrace_报错(tmp_path):
+    from spec_runner.provenance import provenance_lint
+    (tmp_path / "bad.md").write_text("# 没SourceTrace\n", encoding="utf-8")
+    r = provenance_lint(tmp_path)
+    assert not r["valid"]
+    assert "Source Trace" in r["issues"][0]
+
+
+def test_provenance_lint_缺stated_报错(tmp_path):
+    from spec_runner.provenance import provenance_lint
+    (tmp_path / "bad.md").write_text("## Source Trace\n- inferred(高): x\n", encoding="utf-8")
+    r = provenance_lint(tmp_path)
+    assert not r["valid"]  # 缺 stated（人说的来源）
+
+
+def test_provenance_lint_低中置信收集升人审(tmp_path):
+    from spec_runner.provenance import provenance_lint
+    (tmp_path / "ok.md").write_text(
+        "## Source Trace\n- stated: prd §1\n- inferred(高): a\n- inferred(低): b\n- inferred(中): c\n",
+        encoding="utf-8")
+    r = provenance_lint(tmp_path)
+    assert r["valid"]  # 有 stated，valid
+    assert len(r["low_confidence"]) == 2  # 低 + 中 置信收集
