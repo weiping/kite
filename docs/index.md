@@ -13,7 +13,7 @@ nav_order: 1
 >
 > 本文基于 2026 年 8 月的工具状态写成。文中引用的开源项目版本会变，其中设计系统规范当时仍标注为 alpha，采用前请核对上游现状。
 >
-> 本文是一份设计方案加一次小规模验证，不是有产出数据的案例研究。规约层的可行性经一个双语言最小项目实测（见[附录三](#附录三-原型验证记录)），第二部分的工具链照该验证结果配置，L2 的验证体系设计完整但尚未跑满一个观察窗口，L3 只搭了机制没有实跑。
+> 本文是一份设计方案加一次小规模验证，不是有产出数据的案例研究。L1 的规约层与执行器、L1.5 的风险分级 / R0 自动合并 / 审计包，均经 kite 项目实测落地（见各章「落地现状」与 [复盘](./retro-2026-08-07-l1-foundation.md)）；L2 的验证体系设计完整但尚未跑满一个观察窗口，L3 只搭了机制没有实跑。
 >
 > **一处消歧**：本文的 L1 到 L3 指人类关卡在循环上的位置，与循环工程里衡量单条循环成熟度的就绪度分级不是一回事。一条就绪度很高的循环，仍然可能只被允许处理 L1 级别的变更。
 
@@ -521,6 +521,21 @@ Berkeley 的一条预测是保证工作从审查代码转向认证智能体。�
 有了这份清单，当某个模型版本或某条提示词后来被发现有系统性缺陷时，能立刻查出它生产过哪些代码。没有它，一旦发现问题就无法定位影响面。
 
 保留期限：R2 以上永久，R1 两年，R0 六个月。轨迹里的内容一律外置只存引用，脱敏在采集侧兜底，这样密钥与敏感数据的处置面收窄到一个地方。
+
+### 落地现状（kite 验证，2026-08-08）
+
+L1.5 三件在 kite 全部落地并 CI 真跑验证，下面是实际接线与几个理论没点明的坑。
+
+**风险分级接线**：`policy/risk.rego`（R0-R3 + deny）+ `spec-runner risk` 子命令（subprocess `opa eval`；opa 缺失 exit 2、deny 非空 exit 1）。input 三类全填：
+- `changed_files/lines`：用 `origin/main...HEAD`，**不用 `git diff HEAD`**——CI 里 `flutter pub get` 会重生成 `pubspec.lock`，工作区副作用会污染分级；只看 committed PR 改动才准
+- `boundary_violations`：扫所有 specs 的 `allowed_changes` 并集 + 白名单（元文件/文档/配置这些不需契约覆盖的自由区）vs changed
+- `dangling_selectors`：scenario 的 test selector 文件不存在、或 py 函数不存在（查 `def test_func`）
+
+**R0 自动合并**：repo 开 `allow_auto_merge` + main branch protection（require PR + status check + `enforce_admins=false` 保留 owner 紧急绕过）。verify.yml 的 contract job 输出 risk level，`auto-merge` job：R0 → `gh pr merge --auto --squash` / 非 R0 → PR comment。**PR #3（docs 小改）真自动 MERGED 验证通过**。
+
+**审计包**：`spec-runner audit-seal` → `.out/audit/<commit>.json`。CycloneDX 1.5 AI-BOM（`sherpa_onnx` 版本从 pubspec 动态提），制品只存引用（evidence/risk/shadow/design/eval/mutation，不复制内容），`retention` 按 level（R2+永久/R1两年/R0六月），`--archive` 入库 `audit-seal/`。影子记录追加 `.out/shadow.jsonl`，为 L1→L1.5 切换准入（一致性 ≥90%）攒数据。
+
+**关键叡坑（CI 真跑才暴露）**：branch protection 的 `required_status_checks.contexts` 要匹配 check run name（是 `contract` 不是 `verify / contract`）；auto-merge job 没 checkout → `gh pr merge --repo` 免 checkout；非 R0 用 `gh pr comment` 而非 `--add-label`（label 要预建 + 权限碎）。
 
 ## L2：人不看代码之后，什么顶上来
 
