@@ -192,6 +192,25 @@ L1.5 阶段 2 完成，**R0 自动合并真验证通过**（PR #3 docs 小改 �
 
 **L1.5 现状**：阶段 1（risk 评估）+ 阶段 2（boundary 实填 + 影子 + R0 自动合并）完成。关卡概率化闭环：R0 自动合 / R1-R3 人审。dangling_selectors 待接。
 
+## 续作7：L1.5 audit-seal 审计包（阶段1，08-08）
+
+L1.5 第二件——审计包收集能力建立。
+
+**成果**
+- spec-runner `audit-seal` 子命令：`collect_ai_bom`（CycloneDX 1.5 BOM）+ `collect_audit_package`（制品引用 + 元数据）→ 写 `.out/audit/<commit>.json`
+- 原则：只收集不生产，AI-BOM 用 CycloneDX（不自造格式）；制品只存引用不复制内容（轨迹外置）
+- AI 组件：sherpa-onnx-whisper-small（模型）/ agent-spec / spec-runner / opa（工具）
+- 制品引用：evidence / risk / shadow / design_lint / evals / mutation
+- verify.yml 加 audit-seal step，CI 验证生成 `.out/audit/7e57c9e328.json`
+- TDD 4 task，69 测试绿
+
+**阶段后续**
+- 保留期限（R2+永久 / R1两年 / R0六月）+ 入库归档
+- AI-BOM 动态提组件版本（从 pubspec/Cargo，当前硬编码）
+- dangling_selectors 接入（risk.rego input 补全）
+
+**L1.5 现状**：阶段1（risk 评估）+ 阶段2（boundary / R0 自动合并）+ audit-seal（收集能力）。出口准则：R0 自动合并 ✓ + 审计包收集 ✓（完备率 / 保留期限 / dangling 待续）。
+
 ## 恢复上下文的快捷命令
 
 ```bash
@@ -203,6 +222,7 @@ agent-spec lint-knowledge --gate      # 0 error
 flutter analyze                       # apps/mobile 0 error
 gh run list --workflow verify.yml     # CI 全绿
 .venv/bin/python -m spec_runner risk                    # L1.5 风险分级 → {level, deny}
+.venv/bin/python -m spec_runner audit-seal              # L1.5 审计包 → .out/audit/<commit>.json
 ```
 
 <!-- R0 自动合并验证2 12:06 -->
