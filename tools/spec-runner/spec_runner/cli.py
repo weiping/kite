@@ -56,6 +56,9 @@ def main(argv: list[str] | None = None) -> int:
     p_prov = sub.add_parser("provenance-lint", help="需求 provenance 检查（L2 需求接受：Source Trace + 低/中置信升人审）")
     p_prov.add_argument("requirements", help="requirements 目录（knowledge/requirements）")
 
+    p_shadow = sub.add_parser("shadow-report", help="影子运行观测（L1.5→L2 切换准入：level 分布 + 一致性）")
+    p_shadow.add_argument("jsonl", help="shadow.jsonl 路径（.out/shadow.jsonl）")
+
     args = parser.parse_args(argv)
     return {
         "run": cmd_run,
@@ -68,6 +71,7 @@ def main(argv: list[str] | None = None) -> int:
         "audit-seal": cmd_audit_seal,
         "regression-check": cmd_regression_check,
         "provenance-lint": cmd_provenance_lint,
+        "shadow-report": cmd_shadow_report,
     }[args.cmd](args)
 
 
@@ -172,3 +176,10 @@ def cmd_provenance_lint(args) -> int:
     report = provenance_lint(args.requirements)
     print(json.dumps(report, ensure_ascii=False, indent=2))
     return 0 if report["valid"] else 1
+
+
+def cmd_shadow_report(args) -> int:
+    from spec_runner.shadow import shadow_report
+    report = shadow_report(args.jsonl)
+    print(json.dumps(report, ensure_ascii=False, indent=2))
+    return 0

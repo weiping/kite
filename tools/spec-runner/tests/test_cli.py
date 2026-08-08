@@ -482,3 +482,13 @@ def test_shadow_report_一致性_human_decision(tmp_path):
     r = shadow_report(f)
     assert r["consistency"]["compared"] == 3
     assert r["consistency"]["match"] == 2  # R0→auto / R1→review 一致；R0→review 不一致
+
+
+def test_shadow_report命令(monkeypatch, capsys):
+    from spec_runner import shadow
+    monkeypatch.setattr(shadow, "shadow_report", lambda f: {
+        "total": 5, "by_level": {"R0": 5}, "deny_rate": 0.0,
+        "consistency": {"compared": 0, "match": 0, "rate": None}})
+    assert cli.main(["shadow-report", ".out/shadow.jsonl"]) == 0
+    out = capsys.readouterr().out
+    assert "total" in out and "R0" in out
