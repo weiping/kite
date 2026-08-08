@@ -713,7 +713,11 @@ L2 是长期目标（12 周达标窗口），kite 刚起步。已建第一根柱
 
 **柱三 确定性探索**：kite 属性测试已遍布（proto/classify/search/transcribe/queue/isolation/sync 全有 hypothesis `@given`，proto 防毒已是流遍历探索），spec 绑定不变量（task-proto-poison 等）。nightly 加长探索（`HYPOTHESIS_MAX_EXAMPLES=1000`，CI 默认 100），过夜抓白天漏的。状态机/差分/混沌按场景后续。
 
-**待建**：柱二其余层（Test Author 隔离、Verifier 五项、独立裁决）/ 柱三状态机·差分·混沌 / 影子运行达标（L1.5→L2 切换准入）。
+**柱二·层 2 Test Author 隔离**：kite 测试从 spec 派生（`contract.py` 解析 spec 的 Test selector），约定编写测试时只看 spec 的 Given/When/Then、不参考实现（防“测试照着实现写”）。属流程约束，solo 下靠约定。
+
+**影子运行观测**：`spec-runner shadow-report` 读 `.out/shadow.jsonl`，算 level 分布 + deny 率 + 一致性（R0→auto / R1-R3→review 算 match，`human_decision` 为 null 不比）。一致性 ≥90% 是 L1.5→L2 切换准入；kite `human_decision` 回填机制待建（当前记录中均 null）。
+
+**待建**：柱二概率性层（Verifier 五项 / 独立裁决——需真模型调用 + 成本，kite 无此基建，延后）/ 柱三状态机·差分·混沌 / 影子 `human_decision` 回填 + 12 周达标观察。
 
 ## L3：只做试点，范围极窄
 

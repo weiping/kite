@@ -15,6 +15,10 @@ spec-runner audit-seal [--archive]                    # L1.5 审计包 → .out/
 spec-runner regression-check <spec>                    # L2 回归有效性验证
 ```
 
+## Test Author 隔离（L2 柱二层2）
+
+测试从 spec 派生（`contract.py` 解析 Test selector），编写测试时**只看 spec 的 Given/When/Then，不参考实现**——防「测试照着实现写」（反自洽链层 2）。属流程约束，solo 靠约定。
+
 ## regression-check（L2 回归有效性验证）
 
 验证修复真的让测试从红变绿、且测试确实在测这个修复（反自洽链层 3）。
