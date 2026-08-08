@@ -405,3 +405,13 @@ def test_regression_check_stash还原pop恢复跑两轮(monkeypatch):
     report = regression.regression_check("fake.spec.md")
     assert report["valid"] is True
     assert ("stash",) in calls and ("stash", "pop") in calls
+
+
+def test_regression_check命令_valid退出0_invalid退出1(monkeypatch, capsys):
+    from spec_runner import regression
+    monkeypatch.setattr(regression, "regression_check", lambda spec: {"valid": True, "results": []})
+    assert cli.main(["regression-check", "fake.spec.md"]) == 0
+    capsys.readouterr()
+    monkeypatch.setattr(regression, "regression_check",
+                        lambda spec: {"valid": False, "results": [{"scenario": "s", "before": "pass", "after": "pass", "valid": False}]})
+    assert cli.main(["regression-check", "fake.spec.md"]) == 1
