@@ -25,3 +25,4 @@ build/
 
 # whisper 端侧模型（~200MB，由 scripts/download-whisper-model.sh 下载）
 apps/mobile/assets/models/
+.env

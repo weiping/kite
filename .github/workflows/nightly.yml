@@ -25,6 +25,15 @@ jobs:
           HYPOTHESIS_MAX_EXAMPLES: "1000"  # CI 默认 100，nightly 探索 1000 抓白天漏的
         run: |
           python -m pytest tests/ tools/spec-runner/tests/ -q --hypothesis-show-statistics || true
+      - name: verify-ai（L2 概率性裁决，柱二层5/6，有 KEY 才跑，不阻断）
+        env:
+          ZHIPUAI_API_KEY: ${{ secrets.ZHIPUAI_API_KEY }}
+        run: |
+          if [ -z "$ZHIPUAI_API_KEY" ]; then echo "无 KEY，跳过"; exit 0; fi
+          for s in specs/*.spec.md; do
+            echo "::group::verify-ai $s"
+            python -m spec_runner verify-ai "$s" || true  # 概率性不阻断，出 concerns 报告
+          done
       - uses: actions/upload-artifact@v4
         if: always()
         with: {name: mutation-report, path: mutants/}
