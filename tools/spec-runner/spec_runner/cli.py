@@ -59,6 +59,9 @@ def main(argv: list[str] | None = None) -> int:
     p_shadow = sub.add_parser("shadow-report", help="影子运行观测（L1.5→L2 切换准入：level 分布 + 一致性）")
     p_shadow.add_argument("jsonl", help="shadow.jsonl 路径（.out/shadow.jsonl）")
 
+    p_vai = sub.add_parser("verify-ai", help="L2 概率性裁决（层5 Verifier + 层6 独立裁决，调智谱）")
+    p_vai.add_argument("spec", help="契约文件")
+
     args = parser.parse_args(argv)
     return {
         "run": cmd_run,
@@ -72,6 +75,7 @@ def main(argv: list[str] | None = None) -> int:
         "regression-check": cmd_regression_check,
         "provenance-lint": cmd_provenance_lint,
         "shadow-report": cmd_shadow_report,
+        "verify-ai": cmd_verify_ai,
     }[args.cmd](args)
 
 
@@ -181,5 +185,16 @@ def cmd_provenance_lint(args) -> int:
 def cmd_shadow_report(args) -> int:
     from spec_runner.shadow import shadow_report
     report = shadow_report(args.jsonl)
+    print(json.dumps(report, ensure_ascii=False, indent=2))
+    return 0
+
+
+def cmd_verify_ai(args) -> int:
+    from spec_runner.verify_ai import verify_ai
+    try:
+        report = verify_ai(args.spec)
+    except RuntimeError as e:
+        print(str(e), file=sys.stderr)
+        return 2
     print(json.dumps(report, ensure_ascii=False, indent=2))
     return 0

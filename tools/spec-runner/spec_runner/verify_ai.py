@@ -59,3 +59,16 @@ def layer6_adjudicate(scenario: str, gwt: str, requirement: str) -> dict:
     text = _call_zhipu(prompt, system=system)
     ok = text.strip().upper().startswith("ADJUDICATE_OK")
     return {"verdict": "pass" if ok else "concerns", "reasoning": text}
+
+
+def verify_ai(spec_path) -> dict:
+    """对 spec 的每个 scenario 跑层5 Verifier + 层6 独立裁决，汇总。"""
+    from spec_runner.contract import parse_contract_file
+    contract = parse_contract_file(spec_path)
+    results = []
+    for sc in contract.scenarios:
+        gwt = f"Given {sc.given} When {sc.when} Then {sc.then}"
+        l5 = layer5_verify(sc.name, gwt, targets_code="(targets 实现代码，运行时注入)")
+        l6 = layer6_adjudicate(sc.name, gwt, requirement=contract.name)
+        results.append({"scenario": sc.name, "layer5": l5, "layer6": l6})
+    return {"contract": contract.name, "results": results}
