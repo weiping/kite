@@ -242,6 +242,16 @@ audit-seal 收尾：保留期限 + 入库归档。
 
 risk 评估（R0-R3 + boundary + dangling 函数级 → deny）· R0 自动合并（branch protection）· 审计包（CycloneDX AI-BOM 动态 + 制品引用 + retention + --archive 入库）· 影子记录。关卡概率化闭环全建立。
 
+## 待做：L1/L1.5 工作流复用 Skill（08-08 讨论，暂缓）
+
+把 L1/L1.5 工作流抽象成 pi skill 复用到其他项目。方案要点（避免重想）：
+
+- **分层**：配置类（risk.rego R3 路径/白名单、verify.yml、spec 骨架、AI-BOM 组件）纯提示词生成；复杂工具（spec-runner）用「行为 spec + Python reference」；risk.rego/opa/agent-spec 直接复用（语言无关）
+- **skill 结构**：`SKILL.md`（建立步骤+决策点）+ `spec-runner.spec.md`（行为规约：CLI 接口/五态/退出码/risk.rego input 格式）+ `reference/`（Python 参考实现）+ `templates/`（配置模板）+ `REFERENCE.md`（理念精要）
+- **关键判断**：spec-runner 纯提示词生成风险高（五态/退出码/input 格式是跨项目契约，易漂移）→ 用规约 + 参考实现最稳；这也是「用规约建工具」的自指验证
+- 触发词：「建立 L1 地基」「复用 kite 工作流」「AI 自主开发地基」
+- 等 kite 跑顺 + 验证一两个项目后，再投入 spec-runner 通用化/发布
+
 ## 恢复上下文的快捷命令
 
 ```bash
