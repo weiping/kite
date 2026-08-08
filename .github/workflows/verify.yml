@@ -80,6 +80,10 @@ jobs:
           python -c "import json,sys; d=json.load(open('.out/risk.json')); sys.exit(1 if d.get('deny') else 0)"
           echo "level=$(python -c 'import json; print(json.load(open(".out/risk.json"))["level"])')" >> $GITHUB_OUTPUT
 
+      # L1.5 审计包：收集制品引用 + CycloneDX AI-BOM（只收集不生产）
+      - name: audit-seal（L1.5 审计包）
+        run: python -m spec_runner audit-seal
+
       - uses: actions/upload-artifact@v4
         if: always()
         with: {name: evidence, path: .out/}
