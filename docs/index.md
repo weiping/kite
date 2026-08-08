@@ -1303,6 +1303,20 @@ l1-foundation/
 
 agent 在新项目的工作：读 `SKILL.md` → 看项目语言（Python 复制 reference / 其他语言按 `spec-runner.spec.md` 重新实现 + 跑规约测试）→ 填 `templates`（`risk.rego` 的 R3 路径改成新项目的敏感目录、AI-BOM 组件换成新项目的模型与工具）→ 跑通 CI。这本身就是一次「用规约建工具」的验证——L1 的理念用来建 L1 的工具，自指但自洽。
 
+### 使用方法
+
+skill 装在 `~/.pi/skills/l1-foundation/`（pi 自动发现）。在新项目触发：说「建立 L1 地基」「复用 kite 工作流」「AI 自主开发地基」，或 pi 按 description 触发词识别。
+
+agent 按 `SKILL.md` 执行：
+
+1. **装 agent-spec**：`cargo install agent-spec`
+2. **spec-runner**：Python 项目 `cp -r reference/spec_runner <项目>/tools/`；其他语言读 `spec-runner.spec.md` 行为规约重新实现 + 跑规约测试
+3. **填 templates**：`risk.rego` 的 R3 路径改成项目敏感目录；`verify.yml` 改 repo 名；`spec.md`/`requirement.md` 填第一个需求
+4. **CI**：`verify.yml`（contract + auto-merge）+ `nightly.yml`（变异/探索/verify-ai）+ `monthly.yml`（月度审计）
+5. **逐级**：L1（契约 + 五态）→ L1.5（risk + R0 自动合并 + audit-seal）→ L2（反自洽链 + 探索 + verify-ai）→ L3（charter-lint + monthly-audit），每级达标才升
+
+关键：spec-runner 纯提示词生成会漂移，**Python 复制 reference / 其他语言按 spec-runner.spec.md 重写**（行为规约保证跨项目一致）。
+
 ### 不断迭代，不是一次写完
 
 Skill 不追求一次写对所有项目。节奏跟着实践走：
