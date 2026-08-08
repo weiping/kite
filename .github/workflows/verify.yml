@@ -9,6 +9,8 @@ permissions:
 jobs:
   contract:
     runs-on: ubuntu-latest
+    outputs:
+      risk-level: ${{ steps.risk.outputs.level }}
     steps:
       # 注意：生产环境应把下列 action 锁到提交 SHA，不锁标签（标签可被重新指向）
       - uses: actions/checkout@v4
@@ -69,13 +71,38 @@ jobs:
           python -m spec_runner run specs/ --out .out
           python -m spec_runner gate .out/evidence.json --level L1
 
-      # L1.5 风险分级门禁：deny（悬空选择器/边界越界）阻断；输出 level 供后续 R0 自动合并
+      # L1.5 风险分级门禁：deny（悬空选择器/边界越界）阻断；输出 level 供 auto-merge
       - name: risk gate（L1.5 风险分级）
+        id: risk
         run: |
           python -m spec_runner risk > .out/risk.json
           cat .out/risk.json
-          python -c "import json,sys; sys.exit(1 if json.load(open('.out/risk.json'))['deny'] else 0)"
+          python -c "import json,sys; d=json.load(open('.out/risk.json')); sys.exit(1 if d['deny'] else 0)"
+          echo "level=$(python -c 'import json; print(json.load(open(".out/risk.json"))["level"])')" >> $GITHUB_OUTPUT
 
       - uses: actions/upload-artifact@v4
         if: always()
         with: {name: evidence, path: .out/}
+
+  auto-merge:
+    needs: contract
+    if: github.event_name == 'pull_request' && needs.contract.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: R0 自动合并
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          LEVEL: ${{ needs.contract.outputs.risk-level }}
+        run: |
+          echo "risk level: $LEVEL"
+          if [ "$LEVEL" = "R0" ]; then
+            gh pr merge "$PR_NUMBER" --auto --squash --delete-branch
+            echo "R0 → 自动合并（squash）"
+          else
+            gh pr edit "$PR_NUMBER" --add-label "needs-review"
+            echo "非 R0 → 标 needs-review，等人审"
+          fi
