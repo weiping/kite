@@ -24,7 +24,7 @@ Scenario: 合并不读系统时钟
 None.
 
 ## Source Trace
-- invariant:INV-003
+- stated: invariant:INV-003
 
 ## Open Questions
 None.

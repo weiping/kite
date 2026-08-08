@@ -24,7 +24,7 @@ Scenario: 同一序列打两个服务不互相覆盖
 None.
 
 ## Source Trace
-- prd:Kite §5.5 Sync
+- stated: prd:Kite §5.5 Sync
 
 ## Open Questions
 None.

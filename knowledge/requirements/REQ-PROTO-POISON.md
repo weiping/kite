@@ -24,7 +24,7 @@ Scenario: 乱序非法报文不挂死不波及
 None.
 
 ## Source Trace
-- prd:Kite 架构不变量
+- stated: prd:Kite 架构不变量
 
 ## Open Questions
 None.
