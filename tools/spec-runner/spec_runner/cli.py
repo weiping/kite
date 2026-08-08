@@ -47,6 +47,8 @@ def main(argv: list[str] | None = None) -> int:
     p_risk = sub.add_parser("risk", help="风险分级：评估 policy/risk.rego → {level, deny}")
     p_risk.add_argument("--policy", default=None, help="risk.rego 路径（默认 policy/risk.rego）")
 
+    sub.add_parser("audit-seal", help="收集审计包（制品引用 + CycloneDX AI-BOM）→ .out/audit/<commit>.json")
+
     args = parser.parse_args(argv)
     return {
         "run": cmd_run,
@@ -56,6 +58,7 @@ def main(argv: list[str] | None = None) -> int:
         "affected": cmd_affected,
         "bridge": cmd_bridge,
         "risk": cmd_risk,
+        "audit-seal": cmd_audit_seal,
     }[args.cmd](args)
 
 
@@ -127,3 +130,22 @@ def cmd_risk(args) -> int:
     _append_shadow(result, input_data)
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 1 if result["deny"] else 0
+
+
+def cmd_audit_seal(args) -> int:
+    from spec_runner.audit_seal import collect_audit_package, get_commit
+    commit = get_commit()
+    risk_level = "?"
+    risk_file = Path(".out/risk.json")
+    if risk_file.exists():
+        try:
+            risk_level = json.loads(risk_file.read_text(encoding="utf-8")).get("level", "?")
+        except Exception:
+            pass
+    pkg = collect_audit_package(commit, risk_level)
+    out_dir = Path(".out/audit")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_file = out_dir / f"{commit}.json"
+    out_file.write_text(json.dumps(pkg, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(json.dumps({"audit_seal": str(out_file)}, ensure_ascii=False))
+    return 0

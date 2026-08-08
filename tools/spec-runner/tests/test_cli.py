@@ -229,3 +229,48 @@ def test_risk命令追加影子记录(monkeypatch, tmp_path, capsys):
     rec = json.loads(shadow_file.read_text().strip().splitlines()[-1])
     assert rec["level"] == "R0" and rec["changed_files"] == ["docs/x.md"]
     assert "ts" in rec and "commit" in rec
+
+
+def test_collect_ai_bom_返回CycloneDX格式():
+    from spec_runner.audit_seal import collect_ai_bom
+    bom = collect_ai_bom()
+    assert bom["bomFormat"] == "CycloneDX"
+    assert bom["specVersion"] == "1.5"
+    names = [c["name"] for c in bom["components"]]
+    assert "sherpa-onnx-whisper-small" in names  # 端侧转写模型
+    assert "agent-spec" in names                  # 意图编译器
+    assert "spec-runner" in names                 # 执行器
+    assert "opa" in names                         # 策略评估
+    for c in bom["components"]:
+        assert c["type"] in ("application", "data", "library")
+        assert "bom-ref" in c
+
+
+def test_collect_audit_package_含制品引用与ai_bom():
+    from spec_runner.audit_seal import collect_audit_package
+    pkg = collect_audit_package(commit="abc1234567", risk_level="R0")
+    assert pkg["commit"] == "abc1234567"
+    assert pkg["risk_level"] == "R0"
+    assert isinstance(pkg["timestamp"], int)
+    arts = pkg["artifacts"]
+    assert arts["evidence"] == ".out/evidence.json"
+    assert arts["risk"] == ".out/risk.json"
+    assert arts["shadow"] == ".out/shadow.jsonl"
+    assert "design_lint" in arts and "evals" in arts and "mutation" in arts
+    assert pkg["ai_bom"]["bomFormat"] == "CycloneDX"
+
+
+def test_audit_seal命令_写出审计包(monkeypatch, tmp_path, capsys):
+    from spec_runner import audit_seal
+    monkeypatch.setattr(audit_seal, "collect_audit_package", lambda commit, risk_level: {
+        "commit": commit, "risk_level": risk_level, "timestamp": 1,
+        "artifacts": {}, "ai_bom": {"bomFormat": "CycloneDX"}})
+    monkeypatch.setattr(audit_seal, "get_commit", lambda: "short12345")
+    monkeypatch.chdir(tmp_path)
+    code = cli.main(["audit-seal"])
+    assert code == 0
+    capsys.readouterr()
+    pkg_file = tmp_path / ".out" / "audit" / "short12345.json"
+    assert pkg_file.exists()
+    pkg = json.loads(pkg_file.read_text())
+    assert pkg["commit"] == "short12345"
