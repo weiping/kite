@@ -231,6 +231,17 @@ audit-seal 收尾：保留期限 + 入库归档。
 
 **L1.5 audit-seal 完整**（收集 + retention + 入库）。剩余 AI-BOM 动态版本 / dangling 函数级 = 可选后续（低 ROI，硬编码版本 + 文件级 dangling 已够用）。
 
+## 续作10：L1.5 polish（AI-BOM 动态 + dangling 函数级，08-08）
+
+收尾两件：
+- **AI-BOM 动态版本**：`collect_ai_bom` 加 `sherpa_onnx` 组件，version 从 `apps/mobile/pubspec.yaml` 动态提（`_read_pubspec_version`，去 `^` 前缀）
+- **dangling 函数级**：`_collect_dangling_selectors` 增强，py 查 `def <func>(`（文件在但函数不在也算 dangling）
+- TDD 2 task，76 测试绿
+
+## L1.5 全部完成
+
+risk 评估（R0-R3 + boundary + dangling 函数级 → deny）· R0 自动合并（branch protection）· 审计包（CycloneDX AI-BOM 动态 + 制品引用 + retention + --archive 入库）· 影子记录。关卡概率化闭环全建立。
+
 ## 恢复上下文的快捷命令
 
 ```bash
