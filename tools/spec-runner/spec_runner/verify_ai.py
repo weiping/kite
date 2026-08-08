@@ -26,3 +26,36 @@ def _call_zhipu(prompt: str, model: str = "glm-4-flash", system: str | None = No
     messages.append({"role": "user", "content": prompt})
     resp = _client().chat.completions.create(model=model, messages=messages)
     return resp.choices[0].message.content
+
+
+def layer5_verify(scenario: str, gwt: str, targets_code: str) -> dict:
+    """层5 Verifier：检查实现有没有附带损害/越出契约边界（不质疑契约本身）。"""
+    system = (
+        "你是 Verifier（L2 反自洽链层5）。检查实现有没有【附带损害】（改坏别的）或"
+        "【越界】（超出契约边界）。只看实现是否违背 scenario，不质疑契约本身。"
+        "先给结论 VERIFY_OK/VERIFY_FAIL，再一句理由。"
+    )
+    prompt = (
+        f"Scenario: {scenario}\nGiven/When/Then: {gwt}\n\n"
+        f"实现代码:\n{targets_code}\n\n"
+        "这个实现有没有附带损害或越界？"
+    )
+    text = _call_zhipu(prompt, system=system)
+    ok = text.strip().upper().startswith("VERIFY_OK")
+    return {"verdict": "pass" if ok else "concerns", "reasoning": text}
+
+
+def layer6_adjudicate(scenario: str, gwt: str, requirement: str) -> dict:
+    """层6 独立裁决：不假设契约对，独立推演合理行为 vs 契约，找契约洞。"""
+    system = (
+        "你是独立裁决者（L2 反自洽链层6）。【不假设契约是对的】。先独立推演这个需求"
+        "的合理行为，再与契约对比，指出契约有没有漏。给结论 ADJUDICATE_OK（契约没问题）"
+        "/ ADJUDICATE_CONCERN（契约有洞），再一句理由。"
+    )
+    prompt = (
+        f"需求: {requirement}\n契约 Scenario: {scenario}\nGiven/When/Then: {gwt}\n\n"
+        "独立推演合理行为，与契约对比，契约有没有洞？"
+    )
+    text = _call_zhipu(prompt, system=system)
+    ok = text.strip().upper().startswith("ADJUDICATE_OK")
+    return {"verdict": "pass" if ok else "concerns", "reasoning": text}

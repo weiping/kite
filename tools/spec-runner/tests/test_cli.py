@@ -525,3 +525,34 @@ def test_call_zhipu_调client返回content(monkeypatch):
     out = verify_ai._call_zhipu("hi", model="glm-4-flash")
     assert out == "模型回复"
     assert calls[0][0] == "glm-4-flash"
+
+
+def test_layer5_verify_检查附带损害越界(monkeypatch):
+    monkeypatch.setenv("ZHIPUAI_API_KEY", "fake")
+    from spec_runner import verify_ai
+    got = {}
+
+    def fake_call(prompt, model=None, system=None):
+        got["system"] = system
+        return "VERIFY_OK: 无附带损害"
+    monkeypatch.setattr(verify_ai, "_call_zhipu", fake_call)
+    out = verify_ai.layer5_verify(
+        scenario="加法正确", gwt="Given 两数 When 相加 Then 得到和",
+        targets_code="def add(a,b): return a+b")
+    assert out["verdict"] == "pass"
+    assert "附带损害" in got["system"] or "越界" in got["system"]
+
+
+def test_layer6_adjudicate_不假设契约对(monkeypatch):
+    monkeypatch.setenv("ZHIPUAI_API_KEY", "fake")
+    from spec_runner import verify_ai
+    got = {}
+
+    def fake_call(prompt, model=None, system=None):
+        got["system"] = system
+        return "ADJUDICATE_CONCERN: 契约漏了边界"
+    monkeypatch.setattr(verify_ai, "_call_zhipu", fake_call)
+    out = verify_ai.layer6_adjudicate(
+        scenario="加法正确", gwt="Given 两数 When 相加 Then 得到和", requirement="两数相加得和")
+    assert out["verdict"] == "concerns"
+    assert "不假设" in got["system"] or "独立推演" in got["system"]
