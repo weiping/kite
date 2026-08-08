@@ -221,6 +221,16 @@ risk.rego input 补全——`collect_risk_input` 填 dangling_selectors。
 
 **L1.5 风险分级 input 完整**：changed_files/lines + boundary_violations + dangling_selectors 三者全填，risk.rego 的 deny 两条规则都能触发。
 
+## 续作9：audit-seal 阶段2（保留期限 + 入库，08-08）
+
+audit-seal 收尾：保留期限 + 入库归档。
+
+- `_retention(risk_level)`：R2+永久 / R1两年 / R0六月（index.md L1.5 准则），collect_audit_package 加 retention 字段
+- `audit-seal --archive`：入库 `audit-seal/<commit>.json`（永久保留）；默认 `.out/audit/`（CI artifact）
+- TDD 2 task，74 测试绿
+
+**L1.5 audit-seal 完整**（收集 + retention + 入库）。剩余 AI-BOM 动态版本 / dangling 函数级 = 可选后续（低 ROI，硬编码版本 + 文件级 dangling 已够用）。
+
 ## 恢复上下文的快捷命令
 
 ```bash
@@ -232,7 +242,7 @@ agent-spec lint-knowledge --gate      # 0 error
 flutter analyze                       # apps/mobile 0 error
 gh run list --workflow verify.yml     # CI 全绿
 .venv/bin/python -m spec_runner risk                    # L1.5 风险分级 → {level, deny}
-.venv/bin/python -m spec_runner audit-seal              # L1.5 审计包 → .out/audit/<commit>.json
+.venv/bin/python -m spec_runner audit-seal              # L1.5 审计包 → .out/audit/<commit>.json（--archive 入库）
 ```
 
 <!-- R0 自动合并验证2 12:06 -->
