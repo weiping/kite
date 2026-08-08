@@ -595,3 +595,16 @@ def test_charter_lint_检查requirements引用charter(tmp_path):
     assert r["checked"] == 3
     assert r["with_charter"] == 1
     assert len(r["issues"]) == 2  # without + notrace
+
+
+def test_monthly_audit_汇总shadow和变更计数(monkeypatch, tmp_path):
+    from spec_runner import monthly
+    shadow_file = tmp_path / "shadow.jsonl"
+    shadow_file.write_text(
+        '{"ts":1,"commit":"a","level":"R0","deny":[],"changed_files":[],"human_decision":null}\n',
+        encoding="utf-8")
+    monkeypatch.setattr(monthly, "_git_log_since", lambda since: ["abc1234 msg1", "def5678 msg2"])
+    r = monthly.monthly_audit(shadow_file, since="1 month ago")
+    assert r["commits"] == 2
+    assert r["shadow"]["total"] == 1
+    assert r["escape_defects"] is None  # 待 L2 达标后追踪
