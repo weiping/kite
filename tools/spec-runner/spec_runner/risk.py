@@ -11,7 +11,6 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from spec_runner.affected import collect_affected
 from spec_runner.contract import parse_contract_file
 
 POLICY_DIR = Path(__file__).resolve().parents[3] / "policy"
@@ -29,10 +28,43 @@ WHITELIST_FILES = (
 
 
 def collect_risk_input() -> dict:
-    """汇总 risk.rego 的 input（复用 affected + 实填 boundary_violations）。"""
-    data = collect_affected()
+    """汇总 risk.rego 的 input：vs base 的 committed 改动 + 实填 boundary_violations。"""
+    data = _collect_changes_vs_base()
     data["boundary_violations"] = _count_boundary_violations(data["changed_files"])
     return data
+
+
+def _collect_changes_vs_base() -> dict:
+    """vs origin/main 的 committed 改动（PR 真实改动；避开 CI 工作区副作用如 pub get 重生成 lock）。"""
+    base = _detect_base_ref()
+    names = _git(["diff", "--name-only", f"{base}...HEAD"])
+    numstat = _git(["diff", "--numstat", f"{base}...HEAD"])
+    changed_lines = 0
+    for line in numstat.splitlines():
+        parts = line.split()
+        if parts and parts[0].isdigit():
+            changed_lines += int(parts[0])
+    return {
+        "changed_files": [n for n in names.splitlines() if n.strip()],
+        "changed_lines": changed_lines,
+        "dangling_selectors": [],
+        "boundary_violations": 0,
+    }
+
+
+def _detect_base_ref() -> str:
+    for ref in ("origin/main", "origin/master"):
+        if _git(["rev-parse", "--verify", ref]).strip():
+            return ref
+    return "HEAD~1"
+
+
+def _git(args: list[str]) -> str:
+    try:
+        r = subprocess.run(["git", *args], capture_output=True, text=True)
+    except FileNotFoundError:
+        return ""
+    return r.stdout if r.returncode == 0 else ""
 
 
 def _count_boundary_violations(changed_files: list[str], specs_dir: Path | None = None) -> int:

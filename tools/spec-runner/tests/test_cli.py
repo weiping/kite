@@ -111,9 +111,9 @@ def test_affected_从git_diff收集(monkeypatch):
     assert data["boundary_violations"] == 0
 
 
-def test_collect_risk_input_复用affected结构(monkeypatch):
+def test_collect_risk_input_用vs_base改动(monkeypatch):
     from spec_runner import risk
-    monkeypatch.setattr(risk, "collect_affected", lambda: {
+    monkeypatch.setattr(risk, "_collect_changes_vs_base", lambda: {
         "changed_files": ["services/a.py", "policy/risk.rego"],
         "changed_lines": 42,
         "dangling_selectors": [],
@@ -122,7 +122,22 @@ def test_collect_risk_input_复用affected结构(monkeypatch):
     data = risk.collect_risk_input()
     assert data["changed_files"] == ["services/a.py", "policy/risk.rego"]
     assert data["changed_lines"] == 42
-    assert "dangling_selectors" in data and "boundary_violations" in data
+
+
+def test_collect_changes_vs_base_用git_diff_origin_main(monkeypatch):
+    from spec_runner import risk
+    monkeypatch.setattr(risk, "_detect_base_ref", lambda: "origin/main")
+
+    def fake_git(args):
+        if args == ["diff", "--name-only", "origin/main...HEAD"]:
+            return "services/a.py\n"
+        if args == ["diff", "--numstat", "origin/main...HEAD"]:
+            return "10\t2\tservices/a.py\n"
+        return ""
+    monkeypatch.setattr(risk, "_git", fake_git)
+    data = risk._collect_changes_vs_base()
+    assert data["changed_files"] == ["services/a.py"]
+    assert data["changed_lines"] == 10
 
 
 def test_opa缺失_抛明确错误(monkeypatch):
@@ -191,7 +206,7 @@ def test_count_boundary_violations_白名单与allowed不算越界(tmp_path):
 
 def test_collect_risk_input_填boundary_violations(monkeypatch, tmp_path):
     from spec_runner import risk
-    monkeypatch.setattr(risk, "collect_affected", lambda: {
+    monkeypatch.setattr(risk, "_collect_changes_vs_base", lambda: {
         "changed_files": ["services/b.py"], "changed_lines": 1,
         "dangling_selectors": [], "boundary_violations": 0})
     monkeypatch.setattr(risk, "_count_boundary_violations", lambda files, specs_dir=None: 1)
