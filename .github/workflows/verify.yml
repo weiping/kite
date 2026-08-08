@@ -96,7 +96,7 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - name: R0 自动合并
+      - name: 自动合并 + human_decision 回填
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -105,7 +105,8 @@ jobs:
           echo "risk level: $LEVEL"
           if [ "$LEVEL" = "R0" ]; then
             gh pr merge "$PR_NUMBER" --auto --squash --delete-branch --repo weiping/kite
-            echo "R0 → 自动合并（squash）"
+            gh pr comment "$PR_NUMBER" --body "📊 human_decision: **auto** | level: **R0**（自动合并）" --repo weiping/kite || true
           else
-            gh pr comment "$PR_NUMBER" --body "风险分级 **$LEVEL**：非 R0，需人审后合并。" --repo weiping/kite || echo "评论失败，但 level=$LEVEL 已记录"
+            gh pr comment "$PR_NUMBER" --body "📊 human_decision: **review** | level: **$LEVEL**（需人审）—— 影子运行记录" --repo weiping/kite || true
+            gh pr edit "$PR_NUMBER" --add-label "needs-review" --repo weiping/kite 2>/dev/null || true
           fi
