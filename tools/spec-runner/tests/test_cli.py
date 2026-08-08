@@ -274,3 +274,32 @@ def test_audit_seal命令_写出审计包(monkeypatch, tmp_path, capsys):
     assert pkg_file.exists()
     pkg = json.loads(pkg_file.read_text())
     assert pkg["commit"] == "short12345"
+
+
+def test_collect_dangling_selectors_检测不存在文件(tmp_path):
+    from spec_runner import risk
+    specdir = tmp_path / "specs"
+    specdir.mkdir()
+    (specdir / "t.spec.md").write_text(
+        "---\nspec: task\nname: t\nsatisfies: []\n---\n\n"
+        "## Completion Criteria\n\n"
+        "Scenario: 有测试\n  Test:\n    Package: py\n    Filter: tests/exist.py::test_a\n    Level: unit\n"
+        "  Given x\n  When y\n  Then z\n\n"
+        "Scenario: 无测试\n  Test:\n    Package: py\n    Filter: tests/missing.py::test_b\n    Level: unit\n"
+        "  Given x\n  When y\n  Then z\n", encoding="utf-8")
+    (tmp_path / "tests").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "tests" / "exist.py").write_text("def test_a(): pass")
+    dangling = risk._collect_dangling_selectors(specs_dir=specdir, root=tmp_path)
+    assert len(dangling) == 1
+    assert "missing.py" in dangling[0]
+
+
+def test_collect_risk_input_填dangling(monkeypatch):
+    from spec_runner import risk
+    monkeypatch.setattr(risk, "_collect_changes_vs_base", lambda: {
+        "changed_files": [], "changed_lines": 0,
+        "dangling_selectors": [], "boundary_violations": 0})
+    monkeypatch.setattr(risk, "_collect_dangling_selectors",
+                        lambda specs_dir=None, root=None: ["t.spec.md:missing.py::test"])
+    data = risk.collect_risk_input()
+    assert data["dangling_selectors"] == ["t.spec.md:missing.py::test"]

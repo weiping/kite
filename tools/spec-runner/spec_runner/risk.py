@@ -28,9 +28,10 @@ WHITELIST_FILES = (
 
 
 def collect_risk_input() -> dict:
-    """汇总 risk.rego 的 input：vs base 的 committed 改动 + 实填 boundary_violations。"""
+    """汇总 risk.rego 的 input：vs base 的 committed 改动 + 实填 boundary/dangling。"""
     data = _collect_changes_vs_base()
     data["boundary_violations"] = _count_boundary_violations(data["changed_files"])
+    data["dangling_selectors"] = _collect_dangling_selectors()
     return data
 
 
@@ -96,6 +97,26 @@ def _is_whitelisted(path: str) -> bool:
     if "/" not in path and (path in WHITELIST_FILES or path.endswith(".md")):
         return True
     return False
+
+
+def _collect_dangling_selectors(specs_dir: Path | None = None, root: Path | None = None) -> list[str]:
+    """扫所有 specs 的 scenario test selector，文件部分不存在 → dangling。"""
+    specs_dir = specs_dir or SPECS_DIR
+    root = Path(root) if root else SPECS_DIR.parent
+    dangling: list[str] = []
+    for spec in Path(specs_dir).glob("*.spec.md"):
+        try:
+            contract = parse_contract_file(spec)
+        except Exception:
+            continue
+        for scenario in contract.scenarios:
+            sel = scenario.test
+            if not sel.filter:
+                continue
+            file_part = sel.filter.split("::")[0] if "::" in sel.filter else sel.filter
+            if file_part and not (root / file_part).exists():
+                dangling.append(f"{spec.name}:{sel.filter}")
+    return dangling
 
 
 def evaluate_risk(input_data: dict, policy: Path | None = None) -> dict:
