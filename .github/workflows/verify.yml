@@ -103,6 +103,5 @@ jobs:
             gh pr merge "$PR_NUMBER" --auto --squash --delete-branch
             echo "R0 → 自动合并（squash）"
           else
-            gh pr edit "$PR_NUMBER" --add-label "needs-review"
-            echo "非 R0 → 标 needs-review，等人审"
+            gh pr comment "$PR_NUMBER" --body "风险分级 **$LEVEL**：非 R0，需人审后合并。" || echo "评论失败，但 level=$LEVEL 已记录"
           fi
