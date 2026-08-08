@@ -367,3 +367,24 @@ def test_collect_dangling_selectors_函数级py(tmp_path):
     dangling = risk._collect_dangling_selectors(specs_dir=specdir, root=tmp_path)
     assert len(dangling) == 1
     assert "test_absent" in dangling[0]
+
+
+def test_regression_report_还原红修复绿_有效():
+    from spec_runner.regression import _regression_report
+    from spec_runner.runner import ScenarioResult
+    from spec_runner.verdict import Verdict
+    before = [ScenarioResult("场景", "py", "f", Verdict.FAIL, "bug 在")]
+    after = [ScenarioResult("场景", "py", "f", Verdict.PASS, "修了")]
+    report = _regression_report(before, after)
+    assert report["valid"] is True
+    assert report["results"][0]["before"] == "fail" and report["results"][0]["after"] == "pass"
+
+
+def test_regression_report_还原就绿无效_测试没测bug():
+    from spec_runner.regression import _regression_report
+    from spec_runner.runner import ScenarioResult
+    from spec_runner.verdict import Verdict
+    before = [ScenarioResult("场景", "py", "f", Verdict.PASS, "还原也过")]
+    after = [ScenarioResult("场景", "py", "f", Verdict.PASS, "修复也过")]
+    report = _regression_report(before, after)
+    assert report["valid"] is False  # before PASS = 测试没测这个 bug
