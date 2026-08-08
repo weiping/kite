@@ -211,6 +211,16 @@ L1.5 第二件——审计包收集能力建立。
 
 **L1.5 现状**：阶段1（risk 评估）+ 阶段2（boundary / R0 自动合并）+ audit-seal（收集能力）。出口准则：R0 自动合并 ✓ + 审计包收集 ✓（完备率 / 保留期限 / dangling 待续）。
 
+## 续作8：dangling_selectors 接入（08-08）
+
+risk.rego input 补全——`collect_risk_input` 填 dangling_selectors。
+
+- `_collect_dangling_selectors`：扫所有 specs 的 scenario test selector，文件部分不存在 → dangling（最小，用 contract.py 解析；函数级 dangling 留 agent-spec 后续）
+- kite 当前 specs 一致 → dangling 0（能力建立，未来 spec 引用不存在测试 → deny）
+- risk 命令本地验证：level R0, deny 空
+
+**L1.5 风险分级 input 完整**：changed_files/lines + boundary_violations + dangling_selectors 三者全填，risk.rego 的 deny 两条规则都能触发。
+
 ## 恢复上下文的快捷命令
 
 ```bash
