@@ -170,6 +170,28 @@ L1.5 三件中的第一件——风险分级接线——完成并上 main。
 - 影子运行：记录 level vs 人审决定，算一致性（L1→L1.5 切换准入，≥90%）
 - audit-seal 审计包（空目录待实现，出口准则完备率 100%）
 
+## 续作6：L1.5 阶段2（boundary 实填 + 影子记录 + R0 自动合并，08-08）
+
+L1.5 阶段 2 完成，**R0 自动合并真验证通过**（PR #3 docs 小改 → contract pass → 自动 MERGED）。
+
+**成果**
+- boundary_violations 实填：collect_risk_input 扫所有 specs allowed_changes 并集 + 白名单 vs changed
+- 影子记录：risk 命令追加 `.out/shadow.jsonl`（ts/commit/level/deny/changed_files/human_decision）
+- repo auto-merge + delete_branch_on_merge 开启；main branch protection（require PR + check `contract` + enforce_admins=false 保留 owner 紧急绕过）
+- verify.yml：contract job 输出 risk level + auto-merge job（R0 → `gh pr merge --auto --squash` / 非 R0 → comment）
+- **R0 自动合并闭环验证**：PR #3（docs 小改）→ R0 → contract pass → 自动合并
+
+**踩坑（5 个，CI 真跑才暴露）**
+1. **CI `git diff HEAD` 看 pubspec.lock 副作用**：flutter pub get 重生成 lock，git diff HEAD 捕获工作区副作用而非 PR committed 改动。治本：collect_risk_input 改用 `origin/main...HEAD`
+2. **needs-review label 不存在**：`gh pr edit --add-label` 对不存在 label 报错 → 改 `gh pr comment`（权限够 + 免预建）
+3. **R3 触发**：改 `.github/workflows/` → R3（最严档），设计如此（CI 配置敏感）
+4. **branch protection contexts**：实际 check 名是 `contract`（job name），不是 `verify / contract`。required_status_checks.contexts 要匹配 check run name
+5. **auto-merge job 没 checkout**：`gh pr merge` 在非 git 目录失败 → 加 `--repo weiping/kite` 免 checkout
+
+**教训**：CI workflow 的 git/gh 行为必须真跑验证（本地测不出 diff 副作用、check 名、checkout 缺失）。每个假设都要 CI 实证。
+
+**L1.5 现状**：阶段 1（risk 评估）+ 阶段 2（boundary 实填 + 影子 + R0 自动合并）完成。关卡概率化闭环：R0 自动合 / R1-R3 人审。dangling_selectors 待接。
+
 ## 恢复上下文的快捷命令
 
 ```bash
