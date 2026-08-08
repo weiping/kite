@@ -580,3 +580,48 @@ def test_verify_ai命令_缺key退出2(monkeypatch, capsys):
     monkeypatch.setattr(verify_ai, "verify_ai", lambda spec: (_ for _ in ()).throw(RuntimeError("缺 ZHIPUAI_API_KEY")))
     assert cli.main(["verify-ai", "fake.spec.md"]) == 2
     assert "ZHIPUAI_API_KEY" in capsys.readouterr().err
+
+
+def test_charter_lint_检查requirements引用charter(tmp_path):
+    from spec_runner.charter import charter_lint
+    reqdir = tmp_path / "requirements"
+    reqdir.mkdir()
+    (reqdir / "with.md").write_text(
+        "## Source Trace\n- stated: charter 第1条（用户数据属用户）\n", encoding="utf-8")
+    (reqdir / "without.md").write_text(
+        "## Source Trace\n- stated: prd §1\n", encoding="utf-8")
+    (reqdir / "notrace.md").write_text("# 无 Source Trace\n", encoding="utf-8")
+    r = charter_lint(reqdir)
+    assert r["checked"] == 3
+    assert r["with_charter"] == 1
+    assert len(r["issues"]) == 2  # without + notrace
+
+
+def test_monthly_audit_汇总shadow和变更计数(monkeypatch, tmp_path):
+    from spec_runner import monthly
+    shadow_file = tmp_path / "shadow.jsonl"
+    shadow_file.write_text(
+        '{"ts":1,"commit":"a","level":"R0","deny":[],"changed_files":[],"human_decision":null}\n',
+        encoding="utf-8")
+    monkeypatch.setattr(monthly, "_git_log_since", lambda since: ["abc1234 msg1", "def5678 msg2"])
+    r = monthly.monthly_audit(shadow_file, since="1 month ago")
+    assert r["commits"] == 2
+    assert r["shadow"]["total"] == 1
+    assert r["escape_defects"] is None  # 待 L2 达标后追踪
+
+
+def test_charter_lint命令(monkeypatch, capsys):
+    from spec_runner import charter
+    monkeypatch.setattr(charter, "charter_lint", lambda d: {
+        "checked": 2, "with_charter": 2, "coverage": 1.0, "issues": []})
+    assert cli.main(["charter-lint", "knowledge/requirements"]) == 0
+    assert "coverage" in capsys.readouterr().out
+
+
+def test_monthly_audit命令(monkeypatch, capsys):
+    from spec_runner import monthly
+    monkeypatch.setattr(monthly, "monthly_audit", lambda shadow, since="1 month ago": {
+        "period": "1 month ago", "commits": 5,
+        "shadow": {"total": 0}, "escape_defects": None})
+    assert cli.main(["monthly-audit", ".out/shadow.jsonl"]) == 0
+    assert "commits" in capsys.readouterr().out
