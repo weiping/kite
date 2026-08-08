@@ -1314,6 +1314,10 @@ Skill 不追求一次写对所有项目。节奏跟着实践走：
 
 每跑一个项目，三层里「项目特定」的边界就往里收一点，「普适」的往外扩一点。等到第三个项目能纯靠 Skill 起步、几乎不看 kite 源码，这层抽象才算立住。
 
+### 落地现状（kite 抽象，2026-08-09）
+
+skill `l1-foundation` 已建（`~/.pi/skills/l1-foundation/`）：SKILL.md（建立步骤）+ spec-runner.spec.md（行为规约）+ REFERENCE.md（理念）+ templates（配置骨架）+ reference（kite spec-runner 实现）。触发「建立 L1 地基」。等第二个项目试用逼出规约边角。
+
 ### 明确不抽象什么
 
 不进 Skill 的：kite 的业务契约（`specs/`）、kite 的需求治理内容（`knowledge/`）、kite 的 AI-BOM 具体组件清单。这些是 kite 的，不是方法的。Skill 带走的是**怎么建这些东西的判断**，不是这些东西本身。

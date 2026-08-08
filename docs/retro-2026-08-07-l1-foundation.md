@@ -325,15 +325,19 @@ L3 是搭机制不实跑（需 L2 达标才切换）。index.md 明确「机制�
 
 **教训**：用户提危险变更（跳级）时，agent 要 propose 风险 + 替代 + wait，不盲从。这是 AGENTS.md「安全变更问」的实战。
 
-## 待做：L1/L1.5 工作流复用 Skill（08-08 讨论，暂缓）
+## 续作18：l1-foundation skill 实现（08-09，落地）
 
-把 L1/L1.5 工作流抽象成 pi skill 复用到其他项目。方案要点（避免重想）：
+L1/L1.5/L2/L3 工作流抽象成 pi skill `l1-foundation`（`~/.pi/skills/l1-foundation/`）：
 
-- **分层**：配置类（risk.rego R3 路径/白名单、verify.yml、spec 骨架、AI-BOM 组件）纯提示词生成；复杂工具（spec-runner）用「行为 spec + Python reference」；risk.rego/opa/agent-spec 直接复用（语言无关）
-- **skill 结构**：`SKILL.md`（建立步骤+决策点）+ `spec-runner.spec.md`（行为规约：CLI 接口/五态/退出码/risk.rego input 格式）+ `reference/`（Python 参考实现）+ `templates/`（配置模板）+ `REFERENCE.md`（理念精要）
-- **关键判断**：spec-runner 纯提示词生成风险高（五态/退出码/input 格式是跨项目契约，易漂移）→ 用规约 + 参考实现最稳；这也是「用规约建工具」的自指验证
-- 触发词：「建立 L1 地基」「复用 kite 工作流」「AI 自主开发地基」
-- 等 kite 跑顺 + 验证一两个项目后，再投入 spec-runner 通用化/发布
+- `SKILL.md`（建立步骤 + 14 子命令 + 决策点）
+- `spec-runner.spec.md`（行为规约，跨项目契约：CLI 接口/五态/退出码/input 格式）
+- `REFERENCE.md`（理念精要：为什么分级 + 阶梯 + 不跳级 + 踩坑）
+- `templates/`（risk.rego / verify.yml / spec.md / requirement.md 骨架）
+- `reference/`（kite spec-runner 完整实现 + tests，Python 参考实现）
+
+触发：建立 L1 地基 / 复用 kite 工作流 / AI 自主开发地基。agent 在新项目：Python 复制 reference，其他语言按 spec-runner.spec.md 重写。
+
+之前 retro 续作3 提的复用 + index.md 复用化章（「把这套方法带走」）正式落地。等第二个项目试用（不同语言栈）逼出规约边角。
 
 ## 恢复上下文的快捷命令
 
