@@ -303,3 +303,41 @@ def test_collect_risk_input_填dangling(monkeypatch):
                         lambda specs_dir=None, root=None: ["t.spec.md:missing.py::test"])
     data = risk.collect_risk_input()
     assert data["dangling_selectors"] == ["t.spec.md:missing.py::test"]
+
+
+def test_retention_按risk_level():
+    import time
+    from spec_runner.audit_seal import _retention
+    now = int(time.time())
+    assert _retention("R3") == {"policy": "permanent", "expire": None}
+    assert _retention("R2") == {"policy": "permanent", "expire": None}
+    r1 = _retention("R1")
+    assert r1["policy"] == "2y" and r1["expire"] > now
+    r0 = _retention("R0")
+    assert r0["policy"] == "6m" and r0["expire"] > now
+
+
+def test_collect_audit_package_含retention():
+    from spec_runner.audit_seal import collect_audit_package
+    pkg = collect_audit_package(commit="abc", risk_level="R3")
+    assert pkg["retention"]["policy"] == "permanent"
+    pkg0 = collect_audit_package(commit="abc", risk_level="R0")
+    assert pkg0["retention"]["policy"] == "6m"
+
+
+def test_audit_seal命令_archive入库(monkeypatch, tmp_path, capsys):
+    from spec_runner import audit_seal
+    monkeypatch.setattr(audit_seal, "collect_audit_package", lambda commit, risk_level: {
+        "commit": commit, "risk_level": risk_level, "timestamp": 1,
+        "artifacts": {}, "ai_bom": {"bomFormat": "CycloneDX"},
+        "retention": {"policy": "6m"}})
+    monkeypatch.setattr(audit_seal, "get_commit", lambda: "arch12345")
+    monkeypatch.chdir(tmp_path)
+    # 默认写 .out/audit/（CI artifact）
+    assert cli.main(["audit-seal"]) == 0
+    capsys.readouterr()
+    assert (tmp_path / ".out" / "audit" / "arch12345.json").exists()
+    # --archive 入库 audit-seal/（永久保留）
+    assert cli.main(["audit-seal", "--archive"]) == 0
+    capsys.readouterr()
+    assert (tmp_path / "audit-seal" / "arch12345.json").exists()

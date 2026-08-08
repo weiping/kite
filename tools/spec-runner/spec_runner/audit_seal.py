@@ -32,6 +32,15 @@ def collect_ai_bom() -> dict:
     }
 
 
+def _retention(risk_level: str) -> dict:
+    """保留期限（index.md L1.5 准则）：R2+永久，R1 两年，R0 六月。"""
+    if risk_level in ("R2", "R3"):
+        return {"policy": "permanent", "expire": None}
+    if risk_level == "R1":
+        return {"policy": "2y", "expire": int(time.time()) + 2 * 365 * 24 * 3600}
+    return {"policy": "6m", "expire": int(time.time()) + 6 * 30 * 24 * 3600}  # R0/未知
+
+
 def collect_audit_package(commit: str, risk_level: str) -> dict:
     """收集审计包：制品引用（外置）+ AI-BOM + 元数据。
 
@@ -50,6 +59,7 @@ def collect_audit_package(commit: str, risk_level: str) -> dict:
             "mutation": ".github/workflows/nightly.yml",  # 变异得分
         },
         "ai_bom": collect_ai_bom(),
+        "retention": _retention(risk_level),
     }
 
 
