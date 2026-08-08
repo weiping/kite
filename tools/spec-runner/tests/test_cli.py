@@ -172,3 +172,28 @@ def test_risk命令_opa缺失时退出2(monkeypatch, capsys):
     code = cli.main(["risk"])
     assert code == 2
     assert "opa" in capsys.readouterr().err
+
+
+def test_count_boundary_violations_白名单与allowed不算越界(tmp_path):
+    from spec_runner import risk
+    specdir = tmp_path / "specs"
+    specdir.mkdir()
+    (specdir / "t.spec.md").write_text(
+        "---\nspec: task\nname: t\nsatisfies: []\n---\n\n"
+        "## Boundaries\n\n### Allowed Changes\n- services/a.py\n\n"
+        "## Completion Criteria\n", encoding="utf-8")
+    # docs/x.md 白名单；services/a.py allowed；services/b.py 越界；README.md 白名单
+    n = risk._count_boundary_violations(
+        ["docs/x.md", "services/a.py", "services/b.py", "README.md"],
+        specs_dir=specdir)
+    assert n == 1
+
+
+def test_collect_risk_input_填boundary_violations(monkeypatch, tmp_path):
+    from spec_runner import risk
+    monkeypatch.setattr(risk, "collect_affected", lambda: {
+        "changed_files": ["services/b.py"], "changed_lines": 1,
+        "dangling_selectors": [], "boundary_violations": 0})
+    monkeypatch.setattr(risk, "_count_boundary_violations", lambda files, specs_dir=None: 1)
+    data = risk.collect_risk_input()
+    assert data["boundary_violations"] == 1

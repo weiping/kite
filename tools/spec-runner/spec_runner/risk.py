@@ -12,13 +12,58 @@ import tempfile
 from pathlib import Path
 
 from spec_runner.affected import collect_affected
+from spec_runner.contract import parse_contract_file
 
 POLICY_DIR = Path(__file__).resolve().parents[3] / "policy"
+SPECS_DIR = POLICY_DIR.parent / "specs"
+
+# 不需任何 spec 覆盖的自由区（元文件 / 文档 / 配置 / 工具）
+WHITELIST_DIRS = (
+    "specs/", "knowledge/", "policy/", "charter/", "docs/",
+    ".github/", "tools/", "rules/", "evals/", ".pi/", ".agents/",
+)
+WHITELIST_FILES = (
+    "AGENTS.md", "SOUL.md", "USER.md", "MEMORY.md", "README.md", "BOOTSTRAP.md",
+    "pubspec.yaml", "pyproject.toml", "Cargo.toml", "Cargo.lock", ".gitignore",
+)
 
 
 def collect_risk_input() -> dict:
-    """汇总 risk.rego 的 input（复用 affected.collect_affected）。"""
-    return collect_affected()
+    """汇总 risk.rego 的 input（复用 affected + 实填 boundary_violations）。"""
+    data = collect_affected()
+    data["boundary_violations"] = _count_boundary_violations(data["changed_files"])
+    return data
+
+
+def _count_boundary_violations(changed_files: list[str], specs_dir: Path | None = None) -> int:
+    allowed = _collect_all_allowed(specs_dir)
+    n = 0
+    for f in changed_files:
+        f = f.replace("\\", "/")
+        if f in allowed or _is_whitelisted(f):
+            continue
+        n += 1
+    return n
+
+
+def _collect_all_allowed(specs_dir: Path | None = None) -> set[str]:
+    specs_dir = specs_dir or SPECS_DIR
+    allowed: set[str] = set()
+    for spec in Path(specs_dir).glob("*.spec.md"):
+        try:
+            contract = parse_contract_file(spec)
+        except Exception:
+            continue
+        allowed.update(p.replace("\\", "/") for p in contract.allowed_changes)
+    return allowed
+
+
+def _is_whitelisted(path: str) -> bool:
+    if any(path.startswith(d) for d in WHITELIST_DIRS):
+        return True
+    if "/" not in path and (path in WHITELIST_FILES or path.endswith(".md")):
+        return True
+    return False
 
 
 def evaluate_risk(input_data: dict, policy: Path | None = None) -> dict:
