@@ -3,3 +3,8 @@
 pythonpath = ["."]
 testpaths = ["tests"]
 addopts = "-ra"
+
+# L2 变异测试（柱二层4）：nightly 跑，出变异得分报告，不阻断（噪声指标走趋势）。
+[tool.mutmut]
+source_paths = ["services/", "tools/spec-runner/spec_runner/"]
+pytest_add_cli_args_test_selection = ["tests/", "tools/spec-runner/tests/"]
