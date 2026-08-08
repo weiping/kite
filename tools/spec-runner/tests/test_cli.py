@@ -492,3 +492,36 @@ def test_shadow_report命令(monkeypatch, capsys):
     assert cli.main(["shadow-report", ".out/shadow.jsonl"]) == 0
     out = capsys.readouterr().out
     assert "total" in out and "R0" in out
+
+
+def test_call_zhipu_缺key抛友好错误(monkeypatch):
+    monkeypatch.delenv("ZHIPUAI_API_KEY", raising=False)
+    from spec_runner.verify_ai import _call_zhipu
+    try:
+        _call_zhipu("test")
+    except RuntimeError as e:
+        assert "ZHIPUAI_API_KEY" in str(e)
+    else:
+        raise AssertionError("缺 key 应抛 RuntimeError")
+
+
+def test_call_zhipu_调client返回content(monkeypatch):
+    monkeypatch.setenv("ZHIPUAI_API_KEY", "fake")
+    from spec_runner import verify_ai
+    calls = []
+
+    class FakeMsg: content = "模型回复"
+    class FakeChoice: message = FakeMsg()
+    class FakeResp: choices = [FakeChoice()]
+
+    class FakeComp:
+        def create(self, model, messages):
+            calls.append((model, messages))
+            return FakeResp()
+
+    class FakeChat: completions = FakeComp()
+    class FakeClient: chat = FakeChat()
+    monkeypatch.setattr(verify_ai, "_client", lambda: FakeClient())
+    out = verify_ai._call_zhipu("hi", model="glm-4-flash")
+    assert out == "模型回复"
+    assert calls[0][0] == "glm-4-flash"
