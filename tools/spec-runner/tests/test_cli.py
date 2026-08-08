@@ -455,3 +455,30 @@ def test_provenance_lint命令_invalid退出1(monkeypatch):
     monkeypatch.setattr(provenance, "provenance_lint", lambda d: {
         "valid": False, "issues": ["bad.md: 缺 Source Trace"], "low_confidence": []})
     assert cli.main(["provenance-lint", "knowledge/requirements"]) == 1
+
+
+def test_shadow_report_统计level分布(tmp_path):
+    from spec_runner.shadow import shadow_report
+    f = tmp_path / "shadow.jsonl"
+    f.write_text(
+        '{"ts":1,"commit":"a","level":"R0","deny":[],"changed_files":[],"human_decision":null}\n'
+        '{"ts":2,"commit":"b","level":"R1","deny":["x"],"changed_files":[],"human_decision":null}\n'
+        '{"ts":3,"commit":"c","level":"R0","deny":[],"changed_files":[],"human_decision":null}\n',
+        encoding="utf-8")
+    r = shadow_report(f)
+    assert r["total"] == 3
+    assert r["by_level"] == {"R0": 2, "R1": 1}
+    assert r["deny_rate"] == 1 / 3
+
+
+def test_shadow_report_一致性_human_decision(tmp_path):
+    from spec_runner.shadow import shadow_report
+    f = tmp_path / "shadow.jsonl"
+    f.write_text(
+        '{"ts":1,"commit":"a","level":"R0","deny":[],"changed_files":[],"human_decision":"auto"}\n'
+        '{"ts":2,"commit":"b","level":"R1","deny":[],"changed_files":[],"human_decision":"review"}\n'
+        '{"ts":3,"commit":"c","level":"R0","deny":[],"changed_files":[],"human_decision":"review"}\n',
+        encoding="utf-8")
+    r = shadow_report(f)
+    assert r["consistency"]["compared"] == 3
+    assert r["consistency"]["match"] == 2  # R0→auto / R1→review 一致；R0→review 不一致
