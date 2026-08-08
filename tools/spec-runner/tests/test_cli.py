@@ -323,3 +323,21 @@ def test_collect_audit_package_含retention():
     assert pkg["retention"]["policy"] == "permanent"
     pkg0 = collect_audit_package(commit="abc", risk_level="R0")
     assert pkg0["retention"]["policy"] == "6m"
+
+
+def test_audit_seal命令_archive入库(monkeypatch, tmp_path, capsys):
+    from spec_runner import audit_seal
+    monkeypatch.setattr(audit_seal, "collect_audit_package", lambda commit, risk_level: {
+        "commit": commit, "risk_level": risk_level, "timestamp": 1,
+        "artifacts": {}, "ai_bom": {"bomFormat": "CycloneDX"},
+        "retention": {"policy": "6m"}})
+    monkeypatch.setattr(audit_seal, "get_commit", lambda: "arch12345")
+    monkeypatch.chdir(tmp_path)
+    # 默认写 .out/audit/（CI artifact）
+    assert cli.main(["audit-seal"]) == 0
+    capsys.readouterr()
+    assert (tmp_path / ".out" / "audit" / "arch12345.json").exists()
+    # --archive 入库 audit-seal/（永久保留）
+    assert cli.main(["audit-seal", "--archive"]) == 0
+    capsys.readouterr()
+    assert (tmp_path / "audit-seal" / "arch12345.json").exists()

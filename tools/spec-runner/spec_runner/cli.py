@@ -47,7 +47,8 @@ def main(argv: list[str] | None = None) -> int:
     p_risk = sub.add_parser("risk", help="风险分级：评估 policy/risk.rego → {level, deny}")
     p_risk.add_argument("--policy", default=None, help="risk.rego 路径（默认 policy/risk.rego）")
 
-    sub.add_parser("audit-seal", help="收集审计包（制品引用 + CycloneDX AI-BOM）→ .out/audit/<commit>.json")
+    p_audit = sub.add_parser("audit-seal", help="收集审计包（制品引用 + CycloneDX AI-BOM）→ .out/audit/<commit>.json")
+    p_audit.add_argument("--archive", action="store_true", help="入库 audit-seal/（永久保留，默认 .out/ CI artifact）")
 
     args = parser.parse_args(argv)
     return {
@@ -143,7 +144,7 @@ def cmd_audit_seal(args) -> int:
         except Exception:
             pass
     pkg = collect_audit_package(commit, risk_level)
-    out_dir = Path(".out/audit")
+    out_dir = Path("audit-seal") if args.archive else Path(".out/audit")
     out_dir.mkdir(parents=True, exist_ok=True)
     out_file = out_dir / f"{commit}.json"
     out_file.write_text(json.dumps(pkg, ensure_ascii=False, indent=2), encoding="utf-8")
