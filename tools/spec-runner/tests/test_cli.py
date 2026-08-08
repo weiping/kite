@@ -303,3 +303,23 @@ def test_collect_risk_input_填dangling(monkeypatch):
                         lambda specs_dir=None, root=None: ["t.spec.md:missing.py::test"])
     data = risk.collect_risk_input()
     assert data["dangling_selectors"] == ["t.spec.md:missing.py::test"]
+
+
+def test_retention_按risk_level():
+    import time
+    from spec_runner.audit_seal import _retention
+    now = int(time.time())
+    assert _retention("R3") == {"policy": "permanent", "expire": None}
+    assert _retention("R2") == {"policy": "permanent", "expire": None}
+    r1 = _retention("R1")
+    assert r1["policy"] == "2y" and r1["expire"] > now
+    r0 = _retention("R0")
+    assert r0["policy"] == "6m" and r0["expire"] > now
+
+
+def test_collect_audit_package_含retention():
+    from spec_runner.audit_seal import collect_audit_package
+    pkg = collect_audit_package(commit="abc", risk_level="R3")
+    assert pkg["retention"]["policy"] == "permanent"
+    pkg0 = collect_audit_package(commit="abc", risk_level="R0")
+    assert pkg0["retention"]["policy"] == "6m"
