@@ -6,6 +6,7 @@
 """
 from __future__ import annotations
 
+import subprocess
 import time
 
 
@@ -50,3 +51,10 @@ def collect_audit_package(commit: str, risk_level: str) -> dict:
         },
         "ai_bom": collect_ai_bom(),
     }
+
+
+def get_commit() -> str:
+    """当前 commit 短 SHA（审计包文件名 + 元数据）。"""
+    return subprocess.run(
+        ["git", "rev-parse", "--short=10", "HEAD"],
+        capture_output=True, text=True).stdout.strip() or "unknown"

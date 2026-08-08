@@ -258,3 +258,19 @@ def test_collect_audit_package_含制品引用与ai_bom():
     assert arts["shadow"] == ".out/shadow.jsonl"
     assert "design_lint" in arts and "evals" in arts and "mutation" in arts
     assert pkg["ai_bom"]["bomFormat"] == "CycloneDX"
+
+
+def test_audit_seal命令_写出审计包(monkeypatch, tmp_path, capsys):
+    from spec_runner import audit_seal
+    monkeypatch.setattr(audit_seal, "collect_audit_package", lambda commit, risk_level: {
+        "commit": commit, "risk_level": risk_level, "timestamp": 1,
+        "artifacts": {}, "ai_bom": {"bomFormat": "CycloneDX"}})
+    monkeypatch.setattr(audit_seal, "get_commit", lambda: "short12345")
+    monkeypatch.chdir(tmp_path)
+    code = cli.main(["audit-seal"])
+    assert code == 0
+    capsys.readouterr()
+    pkg_file = tmp_path / ".out" / "audit" / "short12345.json"
+    assert pkg_file.exists()
+    pkg = json.loads(pkg_file.read_text())
+    assert pkg["commit"] == "short12345"
