@@ -134,3 +134,41 @@ def test_opa缺失_抛明确错误(monkeypatch):
         assert "opa" in str(e) and "install" in str(e).lower()
     else:
         raise AssertionError("应抛 FileNotFoundError")
+
+
+def test_risk命令_输出level且deny空时退出0(monkeypatch, capsys):
+    from spec_runner import risk
+    monkeypatch.setattr(risk, "collect_risk_input", lambda: {
+        "changed_files": ["docs/x.md"], "changed_lines": 2,
+        "dangling_selectors": [], "boundary_violations": 0})
+    monkeypatch.setattr(risk, "evaluate_risk", lambda data, policy=None: {
+        "level": "R0", "deny": []})
+    code = cli.main(["risk"])
+    out = json.loads(capsys.readouterr().out)
+    assert code == 0
+    assert out["level"] == "R0" and out["deny"] == []
+
+
+def test_risk命令_deny非空时退出1(monkeypatch, capsys):
+    from spec_runner import risk
+    monkeypatch.setattr(risk, "collect_risk_input", lambda: {
+        "changed_files": ["docs/x.md"], "changed_lines": 1,
+        "dangling_selectors": ["坏选择器"], "boundary_violations": 0})
+    monkeypatch.setattr(risk, "evaluate_risk", lambda data, policy=None: {
+        "level": "R0", "deny": ["测试选择器不存在: 坏选择器"]})
+    code = cli.main(["risk"])
+    assert code == 1
+
+
+def test_risk命令_opa缺失时退出2(monkeypatch, capsys):
+    from spec_runner import risk
+    monkeypatch.setattr(risk, "collect_risk_input", lambda: {
+        "changed_files": [], "changed_lines": 0,
+        "dangling_selectors": [], "boundary_violations": 0})
+
+    def _raise(data, policy=None):
+        raise FileNotFoundError("opa 未安装")
+    monkeypatch.setattr(risk, "evaluate_risk", _raise)
+    code = cli.main(["risk"])
+    assert code == 2
+    assert "opa" in capsys.readouterr().err

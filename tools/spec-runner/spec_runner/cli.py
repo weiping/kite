@@ -44,6 +44,9 @@ def main(argv: list[str] | None = None) -> int:
     p_bridge.add_argument("spec")
     p_bridge.add_argument("--code", default=".")
 
+    p_risk = sub.add_parser("risk", help="风险分级：评估 policy/risk.rego → {level, deny}")
+    p_risk.add_argument("--policy", default=None, help="risk.rego 路径（默认 policy/risk.rego）")
+
     args = parser.parse_args(argv)
     return {
         "run": cmd_run,
@@ -52,6 +55,7 @@ def main(argv: list[str] | None = None) -> int:
         "assert-no-boundary-violation": cmd_assert,
         "affected": cmd_affected,
         "bridge": cmd_bridge,
+        "risk": cmd_risk,
     }[args.cmd](args)
 
 
@@ -110,3 +114,15 @@ def cmd_affected(args) -> int:
 def cmd_bridge(args) -> int:
     from spec_runner.bridge import bridge
     return bridge(args.spec, code=args.code)
+
+
+def cmd_risk(args) -> int:
+    from spec_runner.risk import collect_risk_input, evaluate_risk
+    input_data = collect_risk_input()
+    try:
+        result = evaluate_risk(input_data, policy=Path(args.policy) if args.policy else None)
+    except FileNotFoundError as e:
+        print(str(e), file=sys.stderr)
+        return 2
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return 1 if result["deny"] else 0
