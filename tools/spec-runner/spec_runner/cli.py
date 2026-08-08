@@ -62,6 +62,12 @@ def main(argv: list[str] | None = None) -> int:
     p_vai = sub.add_parser("verify-ai", help="L2 概率性裁决（层5 Verifier + 层6 独立裁决，调智谱）")
     p_vai.add_argument("spec", help="契约文件")
 
+    p_charter = sub.add_parser("charter-lint", help="L3 需求 charter 一致性检查（Source Trace 引用 charter）")
+    p_charter.add_argument("requirements", help="requirements 目录")
+    p_monthly = sub.add_parser("monthly-audit", help="L3 月度累积效应审计（shadow 趋势 + 变更计数）")
+    p_monthly.add_argument("shadow", help="shadow.jsonl 路径")
+    p_monthly.add_argument("--since", default="1 month ago")
+
     args = parser.parse_args(argv)
     return {
         "run": cmd_run,
@@ -76,6 +82,8 @@ def main(argv: list[str] | None = None) -> int:
         "provenance-lint": cmd_provenance_lint,
         "shadow-report": cmd_shadow_report,
         "verify-ai": cmd_verify_ai,
+        "charter-lint": cmd_charter_lint,
+        "monthly-audit": cmd_monthly_audit,
     }[args.cmd](args)
 
 
@@ -197,4 +205,16 @@ def cmd_verify_ai(args) -> int:
         print(str(e), file=sys.stderr)
         return 2
     print(json.dumps(report, ensure_ascii=False, indent=2))
+    return 0
+
+
+def cmd_charter_lint(args) -> int:
+    from spec_runner.charter import charter_lint
+    print(json.dumps(charter_lint(args.requirements), ensure_ascii=False, indent=2))
+    return 0
+
+
+def cmd_monthly_audit(args) -> int:
+    from spec_runner.monthly import monthly_audit
+    print(json.dumps(monthly_audit(args.shadow, since=args.since), ensure_ascii=False, indent=2))
     return 0

@@ -608,3 +608,20 @@ def test_monthly_audit_汇总shadow和变更计数(monkeypatch, tmp_path):
     assert r["commits"] == 2
     assert r["shadow"]["total"] == 1
     assert r["escape_defects"] is None  # 待 L2 达标后追踪
+
+
+def test_charter_lint命令(monkeypatch, capsys):
+    from spec_runner import charter
+    monkeypatch.setattr(charter, "charter_lint", lambda d: {
+        "checked": 2, "with_charter": 2, "coverage": 1.0, "issues": []})
+    assert cli.main(["charter-lint", "knowledge/requirements"]) == 0
+    assert "coverage" in capsys.readouterr().out
+
+
+def test_monthly_audit命令(monkeypatch, capsys):
+    from spec_runner import monthly
+    monkeypatch.setattr(monthly, "monthly_audit", lambda shadow, since="1 month ago": {
+        "period": "1 month ago", "commits": 5,
+        "shadow": {"total": 0}, "escape_defects": None})
+    assert cli.main(["monthly-audit", ".out/shadow.jsonl"]) == 0
+    assert "commits" in capsys.readouterr().out
