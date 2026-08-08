@@ -26,6 +26,10 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
 
+      - name: 装 opa（rego 策略评估，L1.5 风险分级）
+        uses: open-policy-agent/setup-opa@v2
+        with: {version: latest}
+
       - name: 装 agent-spec（意图编译器，Rust）
         run: cargo install agent-spec --quiet
 
@@ -64,6 +68,13 @@ jobs:
         run: |
           python -m spec_runner run specs/ --out .out
           python -m spec_runner gate .out/evidence.json --level L1
+
+      # L1.5 风险分级门禁：deny（悬空选择器/边界越界）阻断；输出 level 供后续 R0 自动合并
+      - name: risk gate（L1.5 风险分级）
+        run: |
+          python -m spec_runner risk > .out/risk.json
+          cat .out/risk.json
+          python -c "import json,sys; sys.exit(1 if json.load(open('.out/risk.json'))['deny'] else 0)"
 
       - uses: actions/upload-artifact@v4
         if: always()
