@@ -197,3 +197,20 @@ def test_collect_risk_input_填boundary_violations(monkeypatch, tmp_path):
     monkeypatch.setattr(risk, "_count_boundary_violations", lambda files, specs_dir=None: 1)
     data = risk.collect_risk_input()
     assert data["boundary_violations"] == 1
+
+
+def test_risk命令追加影子记录(monkeypatch, tmp_path, capsys):
+    from spec_runner import risk
+    monkeypatch.setattr(risk, "collect_risk_input", lambda: {
+        "changed_files": ["docs/x.md"], "changed_lines": 2,
+        "dangling_selectors": [], "boundary_violations": 0})
+    monkeypatch.setattr(risk, "evaluate_risk", lambda d, policy=None: {
+        "level": "R0", "deny": []})
+    monkeypatch.chdir(tmp_path)
+    cli.main(["risk"])
+    capsys.readouterr()  # 清 stdout
+    shadow_file = tmp_path / ".out" / "shadow.jsonl"
+    assert shadow_file.exists()
+    rec = json.loads(shadow_file.read_text().strip().splitlines()[-1])
+    assert rec["level"] == "R0" and rec["changed_files"] == ["docs/x.md"]
+    assert "ts" in rec and "commit" in rec

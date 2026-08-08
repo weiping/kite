@@ -87,3 +87,24 @@ def evaluate_risk(input_data: dict, policy: Path | None = None) -> dict:
         raise RuntimeError(f"opa eval 失败（退出 {proc.returncode}）: {proc.stderr}")
     val = json.loads(proc.stdout)["result"][0]["expressions"][0]["value"]
     return {"level": val.get("level"), "deny": list(val.get("deny", []))}
+
+
+def _append_shadow(result: dict, input_data: dict, log_dir: Path | None = None) -> None:
+    """追加影子记录到 .out/shadow.jsonl（L1→L1.5 切换准入用）。"""
+    import subprocess
+    import time
+    log_dir = log_dir or Path(".out")
+    log_dir.mkdir(parents=True, exist_ok=True)
+    commit = subprocess.run(
+        ["git", "rev-parse", "--short=10", "HEAD"],
+        capture_output=True, text=True).stdout.strip()
+    record = {
+        "ts": int(time.time()),
+        "commit": commit,
+        "level": result.get("level"),
+        "deny": result.get("deny", []),
+        "changed_files": input_data.get("changed_files", []),
+        "human_decision": None,  # PR 合并时回填（阶段后续）
+    }
+    with (log_dir / "shadow.jsonl").open("a", encoding="utf-8") as f:
+        f.write(json.dumps(record, ensure_ascii=False) + "\n")

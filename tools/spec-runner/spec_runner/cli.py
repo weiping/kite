@@ -117,12 +117,13 @@ def cmd_bridge(args) -> int:
 
 
 def cmd_risk(args) -> int:
-    from spec_runner.risk import collect_risk_input, evaluate_risk
+    from spec_runner.risk import collect_risk_input, evaluate_risk, _append_shadow
     input_data = collect_risk_input()
     try:
         result = evaluate_risk(input_data, policy=Path(args.policy) if args.policy else None)
     except FileNotFoundError as e:
         print(str(e), file=sys.stderr)
         return 2
+    _append_shadow(result, input_data)
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 1 if result["deny"] else 0
