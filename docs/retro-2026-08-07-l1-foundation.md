@@ -256,6 +256,16 @@ L2 第一根柱子的一层——反自洽验证链层 3（index.md 点名「整
 
 **L2 现状**：柱二·层 3 已建。待建：柱二其余层（Test Author 隔离/变异/Verifier/独立裁决）+ 柱三探索引擎 + provenance + 影子运行达标。L2 切换（去人审）需 12 周数据 + 四柱齐全，kite 还早。
 
+## 续作12：L2-2 变异测试 + provenance（08-08）
+
+L2-2 两件：
+
+**变异测试（柱二层4）**：`pyproject [tool.mutmut]`（source_paths = services/ + spec_runner/）+ nightly.yml 接线（mutmut run/results，不阻断，workflow_dispatch 手动触发）。本地验证 32 files mutated（配置对，跑测试慢留 nightly CI）。变异得分是 L2 达标观测（关键模块 ≥80%），nightly 走趋势不阻断。
+
+**provenance（需求接受机制）**：`spec-runner provenance-lint` 子命令，检查 requirement Source Trace + stated，收集低/中置信 inferred 升人审。**真验证发现 kite 4 个 requirement 缺 stated**（REQ-INV-003/NOTIFY-ISOLATION/PROTO-POISON/SYNC-CONFLICT，格式是 `- prd:`/`- invariant:` 没加 `stated:` 前缀），已补——provenance-lint 抓到了真实漏洞。修复后 valid=true。
+
+**L2 现状**：柱二·层 3（回归有效性）+ 层 4（变异）+ provenance 已建。待建：柱二其余（Test Author 隔离 / Verifier 五项 / 独立裁决）+ 柱三探索引擎（差分/模糊/混沌）+ 影子运行达标。
+
 ## 待做：L1/L1.5 工作流复用 Skill（08-08 讨论，暂缓）
 
 把 L1/L1.5 工作流抽象成 pi skill 复用到其他项目。方案要点（避免重想）：
