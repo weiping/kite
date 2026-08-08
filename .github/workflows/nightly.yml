@@ -1,14 +1,25 @@
 name: nightly
-# 每夜：V5 有效性（变异测试、需求追溯、Agent 行为评测、技能评测）。出报告，不阻断。
-# 不阻断是刻意的：变异得分与行为评测都有噪声，让有噪声的指标阻断合并最后一定会被加跳过开关。
-# 正确做法：出报告加趋势告警，连续三天破线才登记问题。
+# 每夜 V5 有效性：变异测试（L2 柱二层4）。出报告，不阻断。
+# 不阻断是刻意的：变异得分有噪声，让它阻断最后一定被加跳过开关。正确做法是趋势告警，连续三天破线才登记。
 on:
   schedule:
     - cron: "0 2 * * *"
+  workflow_dispatch: {}  # 手动触发（验证用）
 jobs:
-  nightly:
+  mutation:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}
-      - run: echo "nightly: V5 有效性报告（待落地）"
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: 装 spec-runner + mutmut + hypothesis
+        run: python -m pip install -e "tools/spec-runner[test]" hypothesis mutmut
+      - name: 变异测试（L2 柱二层4，不阻断，出报告）
+        run: |
+          mutmut run || true
+          echo "=== 变异结果 ==="
+          mutmut results || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: {name: mutation-report, path: mutants/}
