@@ -266,6 +266,16 @@ L2-2 两件：
 
 **L2 现状**：柱二·层 3（回归有效性）+ 层 4（变异）+ provenance 已建。待建：柱二其余（Test Author 隔离 / Verifier 五项 / 独立裁决）+ 柱三探索引擎（差分/模糊/混沌）+ 影子运行达标。
 
+## 续作13：L2-3 柱三确定性探索（08-08）
+
+kite **属性测试已遍布**（proto/classify/search/transcribe/queue/isolation/sync 全有 hypothesis `@given`，proto 防毒已是流遍历探索）= 柱三基础已有，不是从零。
+
+L2-3 增强：nightly 加 hypothesis 长探索步骤（`HYPOTHESIS_MAX_EXAMPLES=1000`，CI 默认 100），过夜探索抓白天漏的，`--hypothesis-show-statistics` 出统计。变异（柱二层4）+ 探索（柱三）都在 nightly。
+
+状态机（`RuleBasedStateMachine`）/ 差分 / 混沌：kite proto 简单（`@given` lists 已是流探索）+ 单实现 + 服务少，ROI 低，后续按场景。
+
+**L2 现状**：柱二（层3 回归 + 层4 变异）+ provenance + 柱三（属性探索已遍布 + nightly 长探索）已建。待建：柱二其余（Test Author 隔离 / Verifier 五项 / 独立裁决）+ 柱三状态机/差分/混沌 + 影子运行达标（L1.5→L2 切换准入）。
+
 ## 待做：L1/L1.5 工作流复用 Skill（08-08 讨论，暂缓）
 
 把 L1/L1.5 工作流抽象成 pi skill 复用到其他项目。方案要点（避免重想）：

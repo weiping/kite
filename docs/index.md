@@ -711,7 +711,9 @@ L2 是长期目标（12 周达标窗口），kite 刚起步。已建第一根柱
 
 主要给 Agent 修复任务的会话内验证（修完跑一遍再 commit）。CI 接线（commit-ref 模式，HEAD vs HEAD~1）留后续——PR 工作区干净，stash 无效。
 
-**待建**：柱二其余层（Test Author 隔离、Verifier 五项、独立裁决）/ 柱三探索引擎（差分/模糊/混沌）/ 影子运行达标（L1.5→L2 切换准入）。
+**柱三 确定性探索**：kite 属性测试已遍布（proto/classify/search/transcribe/queue/isolation/sync 全有 hypothesis `@given`，proto 防毒已是流遍历探索），spec 绑定不变量（task-proto-poison 等）。nightly 加长探索（`HYPOTHESIS_MAX_EXAMPLES=1000`，CI 默认 100），过夜抓白天漏的。状态机/差分/混沌按场景后续。
+
+**待建**：柱二其余层（Test Author 隔离、Verifier 五项、独立裁决）/ 柱三状态机·差分·混沌 / 影子运行达标（L1.5→L2 切换准入）。
 
 ## L3：只做试点，范围极窄
 
