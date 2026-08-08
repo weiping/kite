@@ -717,7 +717,11 @@ L2 是长期目标（12 周达标窗口），kite 刚起步。已建第一根柱
 
 **影子运行观测**：`spec-runner shadow-report` 读 `.out/shadow.jsonl`，算 level 分布 + deny 率 + 一致性（R0→auto / R1-R3→review 算 match，`human_decision` 为 null 不比）。一致性 ≥90% 是 L1.5→L2 切换准入；kite `human_decision` 回填机制待建（当前记录中均 null）。
 
-**待建**：柱二概率性层（Verifier 五项 / 独立裁决——需真模型调用 + 成本，kite 无此基建，延后）/ 柱三状态机·差分·混沌 / 影子 `human_decision` 回填 + 12 周达标观察。
+**柱二·层5 Verifier + 层6 独立裁决（概率性）**：`spec-runner verify-ai` 调智谱 GLM（`ZHIPUAI_API_KEY` 环境变量 + CI secret + `.gitignore .env`，绝不入仓）。层5 给 scenario + targets 代码查附带损害/越界；层6 不假设契约对，独立推演找契约洞。nightly 条件触发（有 KEY 跑，不阻断，concerns 报告）。
+
+**L2 反自洽链全六层完成**（层1-6）。确定性（层1-4 + 柱三）+ 概率性（层5-6）验证体系全建。
+
+**待建**：影子 `human_decision` 回填 + 12 周达标观察（L1.5→L2 切换准入）。
 
 ## L3：只做试点，范围极窄
 

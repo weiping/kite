@@ -286,6 +286,20 @@ L2-3 增强：nightly 加 hypothesis 长探索步骤（`HYPOTHESIS_MAX_EXAMPLES=
 
 **L2 确定性验证体系完成**：柱二确定性层（层3 回归 + 层4 变异）+ 柱三探索 + provenance + 影子观测。剩概率性（模型基建）+ 影子 12 周达标。
 
+## 续作15：L2 verify-ai（层5 Verifier + 层6 独立裁决，概率性，08-08）
+
+L2 柱二最后两层（概率性，接智谱 GLM）：
+
+**verify-ai 子命令**：调智谱（`ZHIPUAI_API_KEY` 环境变量 + CI secret + `.gitignore .env` 三保险），对 spec scenario 跑：
+- 层5 Verifier：scenario + targets 代码 → 检查附带损害/越界（`VERIFY_OK/FAIL`）
+- 层6 独立裁决：不假设契约对，独立推演 vs 契约，找洞（`ADJUDICATE_OK/CONCERN`）
+
+**CI**：nightly 条件触发（有 KEY 跑，不阻断，concerns 报告）。成本控制（nightly 不每次）。TDD mock 智谱 client，6 测试绿。
+
+**L2 反自洽链全六层完成**：层1（测试从规约派生，kite 已有）+ 层2（Test Author 隔离约定）+ 层3（回归有效性）+ 层4（变异）+ 层5（Verifier）+ 层6（独立裁决）。
+
+**L2 确定性 + 概率性验证体系全建**。剩影子 12 周达标（L1.5→L2 切换准入，`human_decision` 回填 + 观察窗口）。
+
 ## 待做：L1/L1.5 工作流复用 Skill（08-08 讨论，暂缓）
 
 把 L1/L1.5 工作流抽象成 pi skill 复用到其他项目。方案要点（避免重想）：
