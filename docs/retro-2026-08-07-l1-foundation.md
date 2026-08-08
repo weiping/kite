@@ -312,6 +312,19 @@ L3 是搭机制不实跑（需 L2 达标才切换）。index.md 明确「机制�
 
 **L1-L3 全级机制搭完**：L1（地基）+ L1.5（关卡概率化，全闭环）+ L2（反自洽链全六层 + 柱三 + provenance + 影子 + verify-ai）+ L3（charter-lint + monthly-audit）。
 
+## 续作17：L2 加速方案（拒绝跳级后，08-08）
+
+用户要求「取消影子 12 周达标，直接切 L3」——**我拒绝了**（index.md + Berkeley 核心警告的「组织跳级」），提加速方案，用户选。
+
+**为什么拒绝直接切**：影子达标不是官僚门槛，是把「去人审安全吗」变可测量的；`human_decision` 全 null = 没数据盲切；R3 自动合 = Agent 改自己门禁 = 没门禁；index.md 整篇就在反对跳级。
+
+**加速方案（不跳级）**：
+- **human_decision 回填**：auto-merge job 决定后 comment「📊 human_decision: auto/review | level: RX」（PR 留记录，shadow-report 后续可读算一致性）——让 4 周后有数据判一致性
+- **窗口 4 周**：solo 加速（设计保持 12 周通用，落地缩 4 周）
+- **L3 试点**：label 观察后续（不盲自动合）
+
+**教训**：用户提危险变更（跳级）时，agent 要 propose 风险 + 替代 + wait，不盲从。这是 AGENTS.md「安全变更问」的实战。
+
 ## 待做：L1/L1.5 工作流复用 Skill（08-08 讨论，暂缓）
 
 把 L1/L1.5 工作流抽象成 pi skill 复用到其他项目。方案要点（避免重想）：
