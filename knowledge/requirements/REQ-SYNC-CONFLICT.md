@@ -29,7 +29,7 @@ Scenario: 冲突时两份正文都保留
 - REQ-INV-003（合并逻辑是纯函数）
 
 ## Source Trace
-- prd:Kite §5.5 Sync
+- stated: prd:Kite §5.5 Sync
 
 ## Open Questions
 None.
