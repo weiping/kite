@@ -556,3 +556,27 @@ def test_layer6_adjudicate_不假设契约对(monkeypatch):
         scenario="加法正确", gwt="Given 两数 When 相加 Then 得到和", requirement="两数相加得和")
     assert out["verdict"] == "concerns"
     assert "不假设" in got["system"] or "独立推演" in got["system"]
+
+
+def test_verify_ai_对每个scenario跑两层(monkeypatch, tmp_path):
+    from spec_runner import verify_ai
+    monkeypatch.setattr(verify_ai, "layer5_verify", lambda *a, **k: {"verdict": "pass", "reasoning": "ok5"})
+    monkeypatch.setattr(verify_ai, "layer6_adjudicate", lambda *a, **k: {"verdict": "pass", "reasoning": "ok6"})
+    spec = tmp_path / "s.spec.md"
+    spec.write_text(
+        "---\nspec: task\nname: t\nsatisfies: []\n---\n\n"
+        "## Completion Criteria\n\n"
+        "Scenario: 加法\n  Test:\n    Package: py\n    Filter: tests/a.py::test_add\n    Level: unit\n"
+        "  Given 两数\n  When 相加\n  Then 得和\n", encoding="utf-8")
+    report = verify_ai.verify_ai(spec)
+    assert len(report["results"]) == 1
+    r = report["results"][0]
+    assert r["layer5"]["verdict"] == "pass" and r["layer6"]["verdict"] == "pass"
+
+
+def test_verify_ai命令_缺key退出2(monkeypatch, capsys):
+    monkeypatch.delenv("ZHIPUAI_API_KEY", raising=False)
+    from spec_runner import verify_ai
+    monkeypatch.setattr(verify_ai, "verify_ai", lambda spec: (_ for _ in ()).throw(RuntimeError("缺 ZHIPUAI_API_KEY")))
+    assert cli.main(["verify-ai", "fake.spec.md"]) == 2
+    assert "ZHIPUAI_API_KEY" in capsys.readouterr().err
