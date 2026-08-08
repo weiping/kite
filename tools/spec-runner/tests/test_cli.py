@@ -440,3 +440,18 @@ def test_provenance_lint_低中置信收集升人审(tmp_path):
     r = provenance_lint(tmp_path)
     assert r["valid"]  # 有 stated，valid
     assert len(r["low_confidence"]) == 2  # 低 + 中 置信收集
+
+
+def test_provenance_lint命令_valid退出0_低置信列出(monkeypatch, capsys):
+    from spec_runner import provenance
+    monkeypatch.setattr(provenance, "provenance_lint", lambda d: {
+        "valid": True, "issues": [], "low_confidence": ["req.md: inferred(低): x"]})
+    assert cli.main(["provenance-lint", "knowledge/requirements"]) == 0
+    assert "inferred(低)" in capsys.readouterr().out
+
+
+def test_provenance_lint命令_invalid退出1(monkeypatch):
+    from spec_runner import provenance
+    monkeypatch.setattr(provenance, "provenance_lint", lambda d: {
+        "valid": False, "issues": ["bad.md: 缺 Source Trace"], "low_confidence": []})
+    assert cli.main(["provenance-lint", "knowledge/requirements"]) == 1

@@ -53,6 +53,9 @@ def main(argv: list[str] | None = None) -> int:
     p_reg = sub.add_parser("regression-check", help="回归有效性验证（L2 反自洽层3）：修复前红/后绿/还原红")
     p_reg.add_argument("spec", help="契约文件（绑定测试，假设工作区含修复）")
 
+    p_prov = sub.add_parser("provenance-lint", help="需求 provenance 检查（L2 需求接受：Source Trace + 低/中置信升人审）")
+    p_prov.add_argument("requirements", help="requirements 目录（knowledge/requirements）")
+
     args = parser.parse_args(argv)
     return {
         "run": cmd_run,
@@ -64,6 +67,7 @@ def main(argv: list[str] | None = None) -> int:
         "risk": cmd_risk,
         "audit-seal": cmd_audit_seal,
         "regression-check": cmd_regression_check,
+        "provenance-lint": cmd_provenance_lint,
     }[args.cmd](args)
 
 
@@ -159,5 +163,12 @@ def cmd_audit_seal(args) -> int:
 def cmd_regression_check(args) -> int:
     from spec_runner.regression import regression_check
     report = regression_check(args.spec)
+    print(json.dumps(report, ensure_ascii=False, indent=2))
+    return 0 if report["valid"] else 1
+
+
+def cmd_provenance_lint(args) -> int:
+    from spec_runner.provenance import provenance_lint
+    report = provenance_lint(args.requirements)
     print(json.dumps(report, ensure_ascii=False, indent=2))
     return 0 if report["valid"] else 1
