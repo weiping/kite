@@ -13,6 +13,9 @@ class WhisperTranscriber {
 
   /// 加载 whisper 模型。modelDir 含 encoder.int8.onnx / decoder.int8.onnx / tokens.txt。
   void init(String modelDir) {
+    // sherpa_onnx 1.13.4：创建任何 recognizer 前必须先绑定全局 dylib，否则抛
+    // "Please initialize sherpa-onnx first"（retro 续作1 漏记的坑）
+    sherpa.initBindings();
     final config = sherpa.OfflineRecognizerConfig(
       model: sherpa.OfflineModelConfig(
         whisper: sherpa.OfflineWhisperModelConfig(

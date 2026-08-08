@@ -26,6 +26,8 @@
 	<string>$(PRODUCT_COPYRIGHT)</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Kite 需要访问麦克风以录制语音速记，音频仅在本机端侧转写，不上传。</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 </dict>

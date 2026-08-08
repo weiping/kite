@@ -50,9 +50,13 @@ class _HomeScreenState extends State<HomeScreen> {
     await _refresh();
     final modelDir = '${dir.path}/whisper-small';
     if (await File('$modelDir/encoder.int8.onnx').exists()) {
-      _transcriber.init(modelDir);
-      setState(() => _status = '长按麦克风说话，或下方输入文本');
-    } else {
+      try {
+        _transcriber.init(modelDir);
+        if (mounted) setState(() => _status = '长按麦克风说话，或下方输入文本');
+      } catch (e) {
+        if (mounted) setState(() => _status = 'whisper init 失败: $e');
+      }
+    } else if (mounted) {
       setState(() => _status = '下方输入文本（whisper 模型未装，录音转写不可用）');
     }
   }
@@ -72,6 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _onRecordStart() async {
     _entry.onStart();
     await _recorder.start();
+    if (mounted) setState(() {});
   }
 
   Future<void> _onRecordSubmit() async {
@@ -81,11 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final text = _transcriber.transcribe(path);
       if (text != null && text.isNotEmpty) await _classifyAndStore(text);
     }
-  }
-
-  void _onRecordCancel() {
-    _recorder.cancel();
-    _entry.onCancel();
+    if (mounted) setState(() {});
   }
 
   @override
@@ -153,13 +154,24 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ]),
       floatingActionButton: recording || _transcriber.isReady
-          ? GestureDetector(
-              onLongPressStart: (_) => _onRecordStart(),
-              onLongPressEnd: (_) => _onRecordSubmit(),
-              child: FloatingActionButton(
-                onPressed: _onRecordCancel,
-                backgroundColor: const Color(0xFF3B82F6),
-                child: Icon(recording ? Icons.stop : Icons.mic, color: Colors.white),
+          ? Listener(
+              onPointerDown: (_) => _onRecordStart(),
+              onPointerUp: (_) => _onRecordSubmit(),
+              child: Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: recording ? Colors.red : const Color(0xFF3B82F6),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.25),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Icon(recording ? Icons.stop : Icons.mic, color: Colors.white, size: 30),
               ),
             )
           : null,

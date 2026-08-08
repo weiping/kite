@@ -100,6 +100,54 @@ M0 后端纯逻辑链完整 + 客户端 Dart 端侧全链 + 串联。
 
 **M0 状态**：端到端框架两端完整，**whisper 模型下载是唯一阻塞**（网络）。文本路径现在能 `flutter run -d macos` 跑通全链。
 
+## 续作3：whisper 模型下载解锁（08-08）
+
+模型下载阻塞已解除（609MiB 下完，校验通过）。
+
+**镜像方案（国内）**：github release-assets（release-assets.githubusercontent.com）国内基本不通。`MIRROR` 环境变量选镜像，按速度排序：
+- `ghfast`（默认）：~300-380KB/s，~32 分钟下完 ✅
+- `ghproxy`（gh-proxy.com）：~155KB/s
+- `llkk`（gh.llkk.cc）：~186KB/s
+- hf-mirror.com 的 k2-fsa 仓库 401（私有/需授权），hf 路线不通
+- retro 旧版写的 `hf.qhduan.com` 已连不上（HTTP 000），作废
+
+**脚本改进**（`apps/mobile/scripts/download-whisper-model.sh`）：
+- 加 `MIRROR` 选择 + 断点续传（tarball 留 `.cache/`，`--clean` 清）
+- **大小校验**（EXPECTED=639387718，不对报错）
+- 删非 int8 量化版（`small-decoder.onnx` + `small-encoder.onnx` ≈ 970MiB，端侧用不到）→ 1.3G 降到 359M
+- **rename 去 `small-` 前缀** → 代码引用 `encoder.int8.onnx`/`decoder.int8.onnx`/`tokens.txt`（模型无关）
+
+**新踩坑**
+- **解压文件名带 `small-` 前缀**：sherpa 官方包是 `small-encoder.int8.onnx`/`small-decoder.int8.onnx`/`small-tokens.txt`，但代码写的是无前缀名。修复点在下载脚本（rename），非代码——让代码保持模型无关，换 base/medium 时只改脚本
+- **模型实际 609MiB**（639,387,718 字节），非脚本旧注释的 200MB（已改注释）
+- **sherpa_onnx 1.13.4 必须先 `initBindings()`**：创建 OfflineRecognizer 前没调用 `sherpa.initBindings()` 会抛 `Exception: Please initialize sherpa-onnx first`（包注释 `sherpa_onnx.dart:12` 明说 "call initBindings once before any runtime object"）。续作1 记了 API 调用细节但漏了这步。症状隐蔽：app 不崩（async 异常被 framework 吞），但 `_recognizer` 未赋值 → `isReady=false` → FAB 显示条件 `recording || isReady` 为假 → 录音按钮为 null，UI 只剩文本输入框。修复：`WhisperTranscriber.init()` 第一行加 `sherpa.initBindings()`，重新 run 日志 0 异常
+
+**已就位（08-08）**
+- 容器 `~/Library/Containers/com.kite.kiteMobile/Data/Documents/whisper-small/` 已拷入 3 文件（encoder/decoder.int8.onnx + tokens.txt，359M）
+- 修复 `initBindings()` 后 `flutter run -d macos` 日志 0 异常，`isReady=true`，FAB 录音按钮正常显示（注：此前“open .app 启动未崩”是误判——open 无终端看不到 init 抛的 `Please initialize sherpa-onnx first`，app 不崩只是 async 异常被吞。教训：验证 native/FFI init 必须看终端日志，不能凭“进程没退”）
+- bz2 已 trash（解压后冗余，留了空 .cache/ 目录）
+
+**仍待（用户录音验证，agent 无法代劳真声输入）**
+- `flutter run -d macos` 长按录音 → 看 sherpa `decode` 出转写文本
+- record wav 在 macOS 真产出标准 wav（需 run 验证 `readWave` 能读）
+
+## 续作4：UI 真机验证 + 4 个串儿 bug（08-08）
+
+下完模型 `flutter run` 真机验证，揪出 4 个**独立** bug（任一个都让语音输入用不了），逐个修：
+
+1. **sherpa.initBindings() 漏调**（已记续作3新踩坑）→ `_recognizer` 未赋值 → `isReady=false` → FAB 不显示。app 不崩（async 异常被吞），隐蔽
+2. **MaterialIcons 字体没打包**：`pubspec.yaml` 缺 `flutter: uses-material-design: true` → `FontManifest=[]`、flutter_assets 无字体 → 所有 `Icons.xxx`（mic/search/send）显示问号。修复：pubspec 加该段
+3. **macOS Info.plist 缺 NSMicrophoneUsageDescription**：entitlements 有 `device.audio-input` 但 Info.plist 无 usage description → record 库 `AVCaptureDevice.default(for:.audio)` 拿不到设备。修复：Info.plist 加 `NSMicrophoneUsageDescription`
+4. **录音按钮手势竞争**：`GestureDetector` 包 `FloatingActionButton`，FAB 内层 tap recognizer 抢手势，外层 `onLongPressStart` 不触发 → 长按无反应。修复：改 `Listener(onPointerDown/Up)` + `Container`（`BoxShape.circle`），按住录音/松手转写
+
+**教训**：验证 native/FFI/平台能力必须看终端日志，不能凭“进程没退”或“按钮在不在”。这次靠 `debugPrint` 逐层实证（docsDir/exists/isReady/hasPermission/wav）才定位到每层
+
+**录音验证搁置（环境限制，非代码）**
+- 修完 1-4 后，record 库仍报 `Input device not found from available list`（`AVCaptureDevice.default(for:.audio)` 返回 nil）
+- `system_profiler SPAudioDataType` 查无可用音频输入设备 → 当前环境（无麦克风）无法验证录音→转写闭环
+- 已验证通过的链路：模型下载/校验/解压、`initBindings`、`isReady=true`、Listener 手势触发（record start/submit 日志反复出现）、字体/图标渲染、按钮圆形
+- 待有音频设备的环境再跑：长按 → wav → `transcribe` → 时间线
+
 ## 恢复上下文的快捷命令
 
 ```bash
