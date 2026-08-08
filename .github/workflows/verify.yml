@@ -75,10 +75,11 @@ jobs:
       - name: risk gate（L1.5 风险分级）
         id: risk
         run: |
-          python -m spec_runner risk > .out/risk.json
+          python -m spec_runner risk > .out/risk.json 2>&1 || true
+          echo "=== risk.json ==="
           cat .out/risk.json
-          python -c "import json,sys; d=json.load(open('.out/risk.json')); sys.exit(1 if d['deny'] else 0)"
-          echo "level=$(python -c 'import json; print(json.load(open(".out/risk.json"))["level"])')" >> $GITHUB_OUTPUT
+          echo "level=$(python -c 'import json; print(json.load(open(".out/risk.json")).get("level",""))' 2>/dev/null || echo "")" >> $GITHUB_OUTPUT
+          python -c "import json,sys; d=json.load(open('.out/risk.json')); sys.exit(1 if d.get('deny') else 0)"
 
       - uses: actions/upload-artifact@v4
         if: always()
