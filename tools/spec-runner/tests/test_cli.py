@@ -109,3 +109,17 @@ def test_affected_从git_diff收集(monkeypatch):
     assert data["changed_files"] == ["services/a.py", "config/sdui/page.json"]
     assert data["changed_lines"] == 12
     assert data["boundary_violations"] == 0
+
+
+def test_collect_risk_input_复用affected结构(monkeypatch):
+    from spec_runner import risk
+    monkeypatch.setattr(risk, "collect_affected", lambda: {
+        "changed_files": ["services/a.py", "policy/risk.rego"],
+        "changed_lines": 42,
+        "dangling_selectors": [],
+        "boundary_violations": 0,
+    })
+    data = risk.collect_risk_input()
+    assert data["changed_files"] == ["services/a.py", "policy/risk.rego"]
+    assert data["changed_lines"] == 42
+    assert "dangling_selectors" in data and "boundary_violations" in data
