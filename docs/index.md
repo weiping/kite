@@ -825,6 +825,16 @@ L3 最危险的失效不是某一次改错，而是持续的、每次都合理�
 
 ---
 
+### 落地现状（kite L3 机制，2026-08-08）
+
+L3 是搭机制待用（L2 达标才切换）。机制已建：
+
+**charter-lint**：`spec-runner charter-lint` 扫 requirements 检查 Source Trace 引用 charter（L3 一致性论证来源）。真验证 11 requirements，7 引用（63.6%），4 缺（工具抓到真实缺口）。
+
+**monthly-audit**：`spec-runner monthly-audit` 月度累积效应审计骨架（shadow 趋势 + 变更计数，`escape_defects` 待 L2 达标后追踪）。`monthly.yml` 月度 cron（每月 1 号）。
+
+**待建**：需求候选管线（净化→提案→宪章论证→预算→抽检，L3 切换时建）。L3 切换需 L2 达标（影子 12 周 ≥90%）。
+
 ## 什么该自研，什么不该
 
 ### 动手之前先问四个问题

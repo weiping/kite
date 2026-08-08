@@ -300,6 +300,18 @@ L2 柱二最后两层（概率性，接智谱 GLM）：
 
 **L2 确定性 + 概率性验证体系全建**。剩影子 12 周达标（L1.5→L2 切换准入，`human_decision` 回填 + 观察窗口）。
 
+## 续作16：L3 机制（charter-lint + monthly-audit，搭机制待用，08-08）
+
+L3 是搭机制不实跑（需 L2 达标才切换）。index.md 明确「机制要在 L1 阶段建好，不能等 L2 跑顺再补」。
+
+**charter-lint**：扫 requirements 检查 Source Trace 引用 charter（L3 一致性论证来源）。真验证 11 requirements，7 引用 charter（63.6%），4 缺（INV-003/NOTIFY-ISOLATION/PROTO-POISON/SYNC-CONFLICT）——工具抓到真实缺口。
+
+**monthly-audit**：月度累积效应审计骨架（shadow 趋势 + 变更计数，escape_defects 待 L2 达标后追踪）。monthly.yml 月度 cron（每月 1 号）。
+
+**L3 机制搭好待用**：charter 一致性 + 月度审计。需求候选管线（净化/论证/预算）大件，L3 切换时再建。L3 切换需 L2 达标（影子 12 周 ≥90%）。
+
+**L1-L3 全级机制搭完**：L1（地基）+ L1.5（关卡概率化，全闭环）+ L2（反自洽链全六层 + 柱三 + provenance + 影子 + verify-ai）+ L3（charter-lint + monthly-audit）。
+
 ## 待做：L1/L1.5 工作流复用 Skill（08-08 讨论，暂缓）
 
 把 L1/L1.5 工作流抽象成 pi skill 复用到其他项目。方案要点（避免重想）：
