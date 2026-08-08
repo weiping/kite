@@ -367,3 +367,51 @@ def test_collect_dangling_selectors_函数级py(tmp_path):
     dangling = risk._collect_dangling_selectors(specs_dir=specdir, root=tmp_path)
     assert len(dangling) == 1
     assert "test_absent" in dangling[0]
+
+
+def test_regression_report_还原红修复绿_有效():
+    from spec_runner.regression import _regression_report
+    from spec_runner.runner import ScenarioResult
+    from spec_runner.verdict import Verdict
+    before = [ScenarioResult("场景", "py", "f", Verdict.FAIL, "bug 在")]
+    after = [ScenarioResult("场景", "py", "f", Verdict.PASS, "修了")]
+    report = _regression_report(before, after)
+    assert report["valid"] is True
+    assert report["results"][0]["before"] == "fail" and report["results"][0]["after"] == "pass"
+
+
+def test_regression_report_还原就绿无效_测试没测bug():
+    from spec_runner.regression import _regression_report
+    from spec_runner.runner import ScenarioResult
+    from spec_runner.verdict import Verdict
+    before = [ScenarioResult("场景", "py", "f", Verdict.PASS, "还原也过")]
+    after = [ScenarioResult("场景", "py", "f", Verdict.PASS, "修复也过")]
+    report = _regression_report(before, after)
+    assert report["valid"] is False  # before PASS = 测试没测这个 bug
+
+
+def test_regression_check_stash还原pop恢复跑两轮(monkeypatch):
+    from spec_runner import regression
+    from spec_runner.runner import ScenarioResult
+    from spec_runner.verdict import Verdict
+    calls = []
+    monkeypatch.setattr(regression, "_git", lambda args: calls.append(tuple(args)) or "")
+    monkeypatch.setattr(regression, "parse_contract_file", lambda spec: "fake_contract")
+    states = iter([
+        [ScenarioResult("s", "py", "f", Verdict.FAIL, "bug 在")],
+        [ScenarioResult("s", "py", "f", Verdict.PASS, "修了")],
+    ])
+    monkeypatch.setattr(regression, "run_contract", lambda contract, execute: next(states))
+    report = regression.regression_check("fake.spec.md")
+    assert report["valid"] is True
+    assert ("stash",) in calls and ("stash", "pop") in calls
+
+
+def test_regression_check命令_valid退出0_invalid退出1(monkeypatch, capsys):
+    from spec_runner import regression
+    monkeypatch.setattr(regression, "regression_check", lambda spec: {"valid": True, "results": []})
+    assert cli.main(["regression-check", "fake.spec.md"]) == 0
+    capsys.readouterr()
+    monkeypatch.setattr(regression, "regression_check",
+                        lambda spec: {"valid": False, "results": [{"scenario": "s", "before": "pass", "after": "pass", "valid": False}]})
+    assert cli.main(["regression-check", "fake.spec.md"]) == 1

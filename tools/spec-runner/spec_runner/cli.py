@@ -50,6 +50,9 @@ def main(argv: list[str] | None = None) -> int:
     p_audit = sub.add_parser("audit-seal", help="收集审计包（制品引用 + CycloneDX AI-BOM）→ .out/audit/<commit>.json")
     p_audit.add_argument("--archive", action="store_true", help="入库 audit-seal/（永久保留，默认 .out/ CI artifact）")
 
+    p_reg = sub.add_parser("regression-check", help="回归有效性验证（L2 反自洽层3）：修复前红/后绿/还原红")
+    p_reg.add_argument("spec", help="契约文件（绑定测试，假设工作区含修复）")
+
     args = parser.parse_args(argv)
     return {
         "run": cmd_run,
@@ -60,6 +63,7 @@ def main(argv: list[str] | None = None) -> int:
         "bridge": cmd_bridge,
         "risk": cmd_risk,
         "audit-seal": cmd_audit_seal,
+        "regression-check": cmd_regression_check,
     }[args.cmd](args)
 
 
@@ -150,3 +154,10 @@ def cmd_audit_seal(args) -> int:
     out_file.write_text(json.dumps(pkg, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps({"audit_seal": str(out_file)}, ensure_ascii=False))
     return 0
+
+
+def cmd_regression_check(args) -> int:
+    from spec_runner.regression import regression_check
+    report = regression_check(args.spec)
+    print(json.dumps(report, ensure_ascii=False, indent=2))
+    return 0 if report["valid"] else 1
