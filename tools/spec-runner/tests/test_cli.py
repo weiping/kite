@@ -341,3 +341,29 @@ def test_audit_seal命令_archive入库(monkeypatch, tmp_path, capsys):
     assert cli.main(["audit-seal", "--archive"]) == 0
     capsys.readouterr()
     assert (tmp_path / "audit-seal" / "arch12345.json").exists()
+
+
+def test_collect_ai_bom_sherpa版本从pubspec动态提():
+    from spec_runner.audit_seal import collect_ai_bom
+    bom = collect_ai_bom()
+    sherpa = [c for c in bom["components"] if c["name"] == "sherpa_onnx"]
+    assert sherpa, "应有 sherpa_onnx 组件（库）"
+    assert sherpa[0].get("version"), "sherpa_onnx 应有动态版本（从 pubspec 提）"
+
+
+def test_collect_dangling_selectors_函数级py(tmp_path):
+    from spec_runner import risk
+    specdir = tmp_path / "specs"
+    specdir.mkdir()
+    (specdir / "t.spec.md").write_text(
+        "---\nspec: task\nname: t\nsatisfies: []\n---\n\n"
+        "## Completion Criteria\n\n"
+        "Scenario: 函数在\n  Test:\n    Package: py\n    Filter: tests/exist.py::test_present\n    Level: unit\n"
+        "  Given x\n  When y\n  Then z\n\n"
+        "Scenario: 函数不在\n  Test:\n    Package: py\n    Filter: tests/exist.py::test_absent\n    Level: unit\n"
+        "  Given x\n  When y\n  Then z\n", encoding="utf-8")
+    (tmp_path / "tests").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "tests" / "exist.py").write_text("def test_present(): pass\n")
+    dangling = risk._collect_dangling_selectors(specs_dir=specdir, root=tmp_path)
+    assert len(dangling) == 1
+    assert "test_absent" in dangling[0]

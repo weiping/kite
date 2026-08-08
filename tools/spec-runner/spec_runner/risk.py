@@ -6,6 +6,7 @@ dangling_selectors/boundary_violations 阶段1占位（见 affected.py 注释）
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import subprocess
 import tempfile
@@ -100,7 +101,7 @@ def _is_whitelisted(path: str) -> bool:
 
 
 def _collect_dangling_selectors(specs_dir: Path | None = None, root: Path | None = None) -> list[str]:
-    """扫所有 specs 的 scenario test selector，文件部分不存在 → dangling。"""
+    """扫所有 specs 的 scenario test selector，文件不存在或函数不存在（py）→ dangling。"""
     specs_dir = specs_dir or SPECS_DIR
     root = Path(root) if root else SPECS_DIR.parent
     dangling: list[str] = []
@@ -113,9 +114,21 @@ def _collect_dangling_selectors(specs_dir: Path | None = None, root: Path | None
             sel = scenario.test
             if not sel.filter:
                 continue
-            file_part = sel.filter.split("::")[0] if "::" in sel.filter else sel.filter
+            if "::" in sel.filter:
+                file_part, func = sel.filter.split("::", 1)
+            else:
+                file_part, func = sel.filter, ""
             if file_part and not (root / file_part).exists():
                 dangling.append(f"{spec.name}:{sel.filter}")
+                continue
+            # 函数级（py）：查 def <func>(
+            if func and sel.package == "py" and file_part:
+                try:
+                    content = (root / file_part).read_text(encoding="utf-8")
+                except Exception:
+                    content = ""
+                if not re.search(rf"\bdef\s+{re.escape(func)}\s*\(", content):
+                    dangling.append(f"{spec.name}:{sel.filter}")
     return dangling
 
 
