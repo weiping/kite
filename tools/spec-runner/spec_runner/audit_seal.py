@@ -6,6 +6,8 @@
 """
 from __future__ import annotations
 
+import time
+
 
 def collect_ai_bom() -> dict:
     """生成 CycloneDX AI-BOM：kite 的模型/工具作为组件。"""
@@ -26,4 +28,25 @@ def collect_ai_bom() -> dict:
              "bom-ref": "tool:opa",
              "description": "Rego 策略评估（risk.rego 风险分级）"},
         ],
+    }
+
+
+def collect_audit_package(commit: str, risk_level: str) -> dict:
+    """收集审计包：制品引用（外置）+ AI-BOM + 元数据。
+
+    制品只存引用路径，不复制内容（L1.5：轨迹外置，脱敏在采集侧）。
+    """
+    return {
+        "commit": commit,
+        "timestamp": int(time.time()),
+        "risk_level": risk_level,
+        "artifacts": {
+            "evidence": ".out/evidence.json",       # 五态判定 + 覆盖矩阵
+            "risk": ".out/risk.json",               # 风险分级 level/deny
+            "shadow": ".out/shadow.jsonl",          # 影子记录
+            "design_lint": "docs/ixd/DESIGN.md（verify.yml @google/design.md lint）",
+            "evals": "evals/",                       # 评测跑分
+            "mutation": ".github/workflows/nightly.yml",  # 变异得分
+        },
+        "ai_bom": collect_ai_bom(),
     }

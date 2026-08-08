@@ -244,3 +244,17 @@ def test_collect_ai_bom_返回CycloneDX格式():
     for c in bom["components"]:
         assert c["type"] in ("application", "data", "library")
         assert "bom-ref" in c
+
+
+def test_collect_audit_package_含制品引用与ai_bom():
+    from spec_runner.audit_seal import collect_audit_package
+    pkg = collect_audit_package(commit="abc1234567", risk_level="R0")
+    assert pkg["commit"] == "abc1234567"
+    assert pkg["risk_level"] == "R0"
+    assert isinstance(pkg["timestamp"], int)
+    arts = pkg["artifacts"]
+    assert arts["evidence"] == ".out/evidence.json"
+    assert arts["risk"] == ".out/risk.json"
+    assert arts["shadow"] == ".out/shadow.jsonl"
+    assert "design_lint" in arts and "evals" in arts and "mutation" in arts
+    assert pkg["ai_bom"]["bomFormat"] == "CycloneDX"
