@@ -75,6 +75,7 @@ jobs:
       - name: risk gate（L1.5 风险分级）
         id: risk
         run: |
+          python -c "from spec_runner.risk import collect_risk_input; d=collect_risk_input(); print('DIAG changed_files=', d['changed_files']); print('DIAG boundary_violations=', d['boundary_violations'])"
           python -m spec_runner risk > .out/risk.json 2>&1 || true
           echo "=== risk.json ==="
           cat .out/risk.json
