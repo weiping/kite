@@ -11,14 +11,91 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from spec_runner.affected import collect_affected
+from spec_runner.contract import parse_contract_file
 
 POLICY_DIR = Path(__file__).resolve().parents[3] / "policy"
+SPECS_DIR = POLICY_DIR.parent / "specs"
+
+# 不需任何 spec 覆盖的自由区（元文件 / 文档 / 配置 / 工具）
+WHITELIST_DIRS = (
+    "specs/", "knowledge/", "policy/", "charter/", "docs/",
+    ".github/", "tools/", "rules/", "evals/", ".pi/", ".agents/",
+)
+WHITELIST_FILES = (
+    "AGENTS.md", "SOUL.md", "USER.md", "MEMORY.md", "README.md", "BOOTSTRAP.md",
+    "pubspec.yaml", "pyproject.toml", "Cargo.toml", "Cargo.lock", ".gitignore",
+)
 
 
 def collect_risk_input() -> dict:
-    """汇总 risk.rego 的 input（复用 affected.collect_affected）。"""
-    return collect_affected()
+    """汇总 risk.rego 的 input：vs base 的 committed 改动 + 实填 boundary_violations。"""
+    data = _collect_changes_vs_base()
+    data["boundary_violations"] = _count_boundary_violations(data["changed_files"])
+    return data
+
+
+def _collect_changes_vs_base() -> dict:
+    """vs origin/main 的 committed 改动（PR 真实改动；避开 CI 工作区副作用如 pub get 重生成 lock）。"""
+    base = _detect_base_ref()
+    names = _git(["diff", "--name-only", f"{base}...HEAD"])
+    numstat = _git(["diff", "--numstat", f"{base}...HEAD"])
+    changed_lines = 0
+    for line in numstat.splitlines():
+        parts = line.split()
+        if parts and parts[0].isdigit():
+            changed_lines += int(parts[0])
+    return {
+        "changed_files": [n for n in names.splitlines() if n.strip()],
+        "changed_lines": changed_lines,
+        "dangling_selectors": [],
+        "boundary_violations": 0,
+    }
+
+
+def _detect_base_ref() -> str:
+    for ref in ("origin/main", "origin/master"):
+        if _git(["rev-parse", "--verify", ref]).strip():
+            return ref
+    return "HEAD~1"
+
+
+def _git(args: list[str]) -> str:
+    try:
+        r = subprocess.run(["git", *args], capture_output=True, text=True)
+    except FileNotFoundError:
+        return ""
+    return r.stdout if r.returncode == 0 else ""
+
+
+def _count_boundary_violations(changed_files: list[str], specs_dir: Path | None = None) -> int:
+    allowed = _collect_all_allowed(specs_dir)
+    n = 0
+    for f in changed_files:
+        f = f.replace("\\", "/")
+        if f in allowed or _is_whitelisted(f):
+            continue
+        n += 1
+    return n
+
+
+def _collect_all_allowed(specs_dir: Path | None = None) -> set[str]:
+    specs_dir = specs_dir or SPECS_DIR
+    allowed: set[str] = set()
+    for spec in Path(specs_dir).glob("*.spec.md"):
+        try:
+            contract = parse_contract_file(spec)
+        except Exception:
+            continue
+        allowed.update(p.replace("\\", "/") for p in contract.allowed_changes)
+    return allowed
+
+
+def _is_whitelisted(path: str) -> bool:
+    if any(path.startswith(d) for d in WHITELIST_DIRS):
+        return True
+    if "/" not in path and (path in WHITELIST_FILES or path.endswith(".md")):
+        return True
+    return False
 
 
 def evaluate_risk(input_data: dict, policy: Path | None = None) -> dict:
@@ -42,3 +119,24 @@ def evaluate_risk(input_data: dict, policy: Path | None = None) -> dict:
         raise RuntimeError(f"opa eval 失败（退出 {proc.returncode}）: {proc.stderr}")
     val = json.loads(proc.stdout)["result"][0]["expressions"][0]["value"]
     return {"level": val.get("level"), "deny": list(val.get("deny", []))}
+
+
+def _append_shadow(result: dict, input_data: dict, log_dir: Path | None = None) -> None:
+    """追加影子记录到 .out/shadow.jsonl（L1→L1.5 切换准入用）。"""
+    import subprocess
+    import time
+    log_dir = log_dir or Path(".out")
+    log_dir.mkdir(parents=True, exist_ok=True)
+    commit = subprocess.run(
+        ["git", "rev-parse", "--short=10", "HEAD"],
+        capture_output=True, text=True).stdout.strip()
+    record = {
+        "ts": int(time.time()),
+        "commit": commit,
+        "level": result.get("level"),
+        "deny": result.get("deny", []),
+        "changed_files": input_data.get("changed_files", []),
+        "human_decision": None,  # PR 合并时回填（阶段后续）
+    }
+    with (log_dir / "shadow.jsonl").open("a", encoding="utf-8") as f:
+        f.write(json.dumps(record, ensure_ascii=False) + "\n")

@@ -111,9 +111,9 @@ def test_affected_从git_diff收集(monkeypatch):
     assert data["boundary_violations"] == 0
 
 
-def test_collect_risk_input_复用affected结构(monkeypatch):
+def test_collect_risk_input_用vs_base改动(monkeypatch):
     from spec_runner import risk
-    monkeypatch.setattr(risk, "collect_affected", lambda: {
+    monkeypatch.setattr(risk, "_collect_changes_vs_base", lambda: {
         "changed_files": ["services/a.py", "policy/risk.rego"],
         "changed_lines": 42,
         "dangling_selectors": [],
@@ -122,7 +122,22 @@ def test_collect_risk_input_复用affected结构(monkeypatch):
     data = risk.collect_risk_input()
     assert data["changed_files"] == ["services/a.py", "policy/risk.rego"]
     assert data["changed_lines"] == 42
-    assert "dangling_selectors" in data and "boundary_violations" in data
+
+
+def test_collect_changes_vs_base_用git_diff_origin_main(monkeypatch):
+    from spec_runner import risk
+    monkeypatch.setattr(risk, "_detect_base_ref", lambda: "origin/main")
+
+    def fake_git(args):
+        if args == ["diff", "--name-only", "origin/main...HEAD"]:
+            return "services/a.py\n"
+        if args == ["diff", "--numstat", "origin/main...HEAD"]:
+            return "10\t2\tservices/a.py\n"
+        return ""
+    monkeypatch.setattr(risk, "_git", fake_git)
+    data = risk._collect_changes_vs_base()
+    assert data["changed_files"] == ["services/a.py"]
+    assert data["changed_lines"] == 10
 
 
 def test_opa缺失_抛明确错误(monkeypatch):
@@ -172,3 +187,45 @@ def test_risk命令_opa缺失时退出2(monkeypatch, capsys):
     code = cli.main(["risk"])
     assert code == 2
     assert "opa" in capsys.readouterr().err
+
+
+def test_count_boundary_violations_白名单与allowed不算越界(tmp_path):
+    from spec_runner import risk
+    specdir = tmp_path / "specs"
+    specdir.mkdir()
+    (specdir / "t.spec.md").write_text(
+        "---\nspec: task\nname: t\nsatisfies: []\n---\n\n"
+        "## Boundaries\n\n### Allowed Changes\n- services/a.py\n\n"
+        "## Completion Criteria\n", encoding="utf-8")
+    # docs/x.md 白名单；services/a.py allowed；services/b.py 越界；README.md 白名单
+    n = risk._count_boundary_violations(
+        ["docs/x.md", "services/a.py", "services/b.py", "README.md"],
+        specs_dir=specdir)
+    assert n == 1
+
+
+def test_collect_risk_input_填boundary_violations(monkeypatch, tmp_path):
+    from spec_runner import risk
+    monkeypatch.setattr(risk, "_collect_changes_vs_base", lambda: {
+        "changed_files": ["services/b.py"], "changed_lines": 1,
+        "dangling_selectors": [], "boundary_violations": 0})
+    monkeypatch.setattr(risk, "_count_boundary_violations", lambda files, specs_dir=None: 1)
+    data = risk.collect_risk_input()
+    assert data["boundary_violations"] == 1
+
+
+def test_risk命令追加影子记录(monkeypatch, tmp_path, capsys):
+    from spec_runner import risk
+    monkeypatch.setattr(risk, "collect_risk_input", lambda: {
+        "changed_files": ["docs/x.md"], "changed_lines": 2,
+        "dangling_selectors": [], "boundary_violations": 0})
+    monkeypatch.setattr(risk, "evaluate_risk", lambda d, policy=None: {
+        "level": "R0", "deny": []})
+    monkeypatch.chdir(tmp_path)
+    cli.main(["risk"])
+    capsys.readouterr()  # 清 stdout
+    shadow_file = tmp_path / ".out" / "shadow.jsonl"
+    assert shadow_file.exists()
+    rec = json.loads(shadow_file.read_text().strip().splitlines()[-1])
+    assert rec["level"] == "R0" and rec["changed_files"] == ["docs/x.md"]
+    assert "ts" in rec and "commit" in rec
