@@ -229,3 +229,18 @@ def test_risk命令追加影子记录(monkeypatch, tmp_path, capsys):
     rec = json.loads(shadow_file.read_text().strip().splitlines()[-1])
     assert rec["level"] == "R0" and rec["changed_files"] == ["docs/x.md"]
     assert "ts" in rec and "commit" in rec
+
+
+def test_collect_ai_bom_返回CycloneDX格式():
+    from spec_runner.audit_seal import collect_ai_bom
+    bom = collect_ai_bom()
+    assert bom["bomFormat"] == "CycloneDX"
+    assert bom["specVersion"] == "1.5"
+    names = [c["name"] for c in bom["components"]]
+    assert "sherpa-onnx-whisper-small" in names  # 端侧转写模型
+    assert "agent-spec" in names                  # 意图编译器
+    assert "spec-runner" in names                 # 执行器
+    assert "opa" in names                         # 策略评估
+    for c in bom["components"]:
+        assert c["type"] in ("application", "data", "library")
+        assert "bom-ref" in c
