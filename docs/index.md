@@ -465,6 +465,16 @@ D1.5 只在一个地方成立：不重启进程就能生效、且能秒级撤销
 
 这里能看出五态的价值。工具链缺失时判不确定而不是失败，因为**无法求证不等于被证伪**；两态模型只能在过和不过里二选一，一定会把环境问题记成质量问题。退出码到五态的完整映射，以及几个容易写错的地方，见[退出码到五态的映射](#退出码到五态的映射)。
 
+### 适配层落地现状（kite spec-runner）
+
+spec-runner 不只做五态 bridge，还承载了 L1.5/L2 的确定性 + 概率性工具，全在一个 Python 包（`tools/spec-runner`）：
+
+- **L1**：`run`（执行契约测试→五态）、`gate`（五态门禁）、`bridge`（注入 resolve-ai）、`affected`/`allowed-changes`/`assert-no-boundary-violation`（边界）
+- **L1.5**：`risk`（opa eval risk.rego → {level, deny}）、`audit-seal`（CycloneDX AI-BOM + retention + 入库）
+- **L2**：`regression-check`（回归有效性，层3）、`provenance-lint`（需求来源 + 低置信升人审）、`shadow-report`（影子观测，L1.5→L2 切换准入）、`verify-ai`（层5 Verifier + 层6 独立裁决，调智谱）
+
+94 测试覆盖。变异测试（mutmut）+ 确定性探索（hypothesis 长探索）+ verify-ai（概率性）在 nightly。
+
 ### 什么时候算达标
 
 六条硬指标，连续窗口内全部达标才允许提升：
@@ -1352,6 +1362,17 @@ prototype/                         # 附录三那个双语言最小项目
 ```
 
 摆成文件而不是代码块，有一个实际好处：**它们可以被自己的 CI 检查。** 策略文件能跑 `conftest verify`，登记表能校验 schema，契约示例能跑 lint。文档里的代码块会随着上游变化悄悄过时，仓库里的文件会红。
+
+**kite 实际摆布**（对应上面 examples/ 设计）：
+
+```
+tools/spec-runner/spec_runner/   # 适配层实现（run/gate/bridge + risk/audit-seal/regression/provenance/shadow/verify-ai）
+policy/                           # risk.rego + boundary.rego + reversibility.rego（策略）
+.github/workflows/                # verify.yml（门禁）+ nightly.yml（变异/探索/verify-ai）
+knowledge/requirements/           # 需求治理（含 Source Trace provenance）
+specs/*.spec.md                   # 任务契约
+apps/mobile/                      # Flutter 客户端
+```
 
 ## 附录三 原型验证记录
 
