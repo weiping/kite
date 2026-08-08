@@ -341,3 +341,11 @@ def test_audit_seal命令_archive入库(monkeypatch, tmp_path, capsys):
     assert cli.main(["audit-seal", "--archive"]) == 0
     capsys.readouterr()
     assert (tmp_path / "audit-seal" / "arch12345.json").exists()
+
+
+def test_collect_ai_bom_sherpa版本从pubspec动态提():
+    from spec_runner.audit_seal import collect_ai_bom
+    bom = collect_ai_bom()
+    sherpa = [c for c in bom["components"] if c["name"] == "sherpa_onnx"]
+    assert sherpa, "应有 sherpa_onnx 组件（库）"
+    assert sherpa[0].get("version"), "sherpa_onnx 应有动态版本（从 pubspec 提）"
