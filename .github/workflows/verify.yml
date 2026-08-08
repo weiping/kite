@@ -100,8 +100,8 @@ jobs:
         run: |
           echo "risk level: $LEVEL"
           if [ "$LEVEL" = "R0" ]; then
-            gh pr merge "$PR_NUMBER" --auto --squash --delete-branch
+            gh pr merge "$PR_NUMBER" --auto --squash --delete-branch --repo weiping/kite
             echo "R0 → 自动合并（squash）"
           else
-            gh pr comment "$PR_NUMBER" --body "风险分级 **$LEVEL**：非 R0，需人审后合并。" || echo "评论失败，但 level=$LEVEL 已记录"
+            gh pr comment "$PR_NUMBER" --body "风险分级 **$LEVEL**：非 R0，需人审后合并。" --repo weiping/kite || echo "评论失败，但 level=$LEVEL 已记录"
           fi
