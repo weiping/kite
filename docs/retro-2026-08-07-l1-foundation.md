@@ -276,6 +276,16 @@ L2-3 增强：nightly 加 hypothesis 长探索步骤（`HYPOTHESIS_MAX_EXAMPLES=
 
 **L2 现状**：柱二（层3 回归 + 层4 变异）+ provenance + 柱三（属性探索已遍布 + nightly 长探索）已建。待建：柱二其余（Test Author 隔离 / Verifier 五项 / 独立裁决）+ 柱三状态机/差分/混沌 + 影子运行达标（L1.5→L2 切换准入）。
 
+## 续作14：L2 影子观测 + Test Author 隔离（08-08）
+
+**影子运行观测（L1.5→L2 切换准入）**：`spec-runner shadow-report` 读 `.out/shadow.jsonl`，算 level 分布 + deny 率 + 一致性（R0→auto / R1-R3→review 算 match，`human_decision` null 不比）。真验证本地 25 条（全 R0，deny_rate 0.48，consistency 待 `human_decision` 回填）。一致性 ≥90% 是切换准入。
+
+**Test Author 隔离（柱二层2）**：kite 测试从 spec 派生（`contract.py` 解析 Test selector），约定编写只看 spec G/W/T 不参考实现（防「测试照实现写」）。属流程约束，solo 靠约定（index L2 落地现状 + README 记）。
+
+**概率性基建（柱二层5/6）延后**：Verifier 五项 / 独立裁决需真模型调用 + 成本，kite 无模型基建（bridge 用 spec-runner mock，非真 AI），延后到引入真 AI verifier。
+
+**L2 确定性验证体系完成**：柱二确定性层（层3 回归 + 层4 变异）+ 柱三探索 + provenance + 影子观测。剩概率性（模型基建）+ 影子 12 周达标。
+
 ## 待做：L1/L1.5 工作流复用 Skill（08-08 讨论，暂缓）
 
 把 L1/L1.5 工作流抽象成 pi skill 复用到其他项目。方案要点（避免重想）：
