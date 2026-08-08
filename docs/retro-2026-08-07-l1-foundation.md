@@ -182,3 +182,5 @@ flutter analyze                       # apps/mobile 0 error
 gh run list --workflow verify.yml     # CI 全绿
 .venv/bin/python -m spec_runner risk                    # L1.5 风险分级 → {level, deny}
 ```
+
+<!-- R0 自动合并验证2 12:06 -->
